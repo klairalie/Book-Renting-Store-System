@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Bookrenting</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Bookrenting.styles.css" asp-append-version="true" />
+</head>
+<body class="bg-gradient-to-br from-[#f4efdc] via-[#ece9de] to-[#e4ded1] text-black font-sans">
+
+    <!-- Navbar -->
+    <header>
+        <nav class="bg-[#4B2E2E] shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    
+                    <!-- Logo -->
+                    <div class="flex-shrink-0">
+                        <a class="text-white font-extrabold text-xl tracking-wide hover:opacity-90 transition"
+                           asp-area="" asp-controller="Home" asp-action="Index">
+                            📚 Book Renting Store
+                        </a>
+                    </div>
+
+                    <!-- Nav Links (Desktop) -->
+                    <div class="hidden sm:flex items-center space-x-6">
+                        <a class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition hover:underline"
+                           asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        <a class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition hover:underline"
+                           asp-area="" asp-controller="Rentals" asp-action="Index">Contact</a>
+                        <a class="bg-white text-[#4B2E2E] px-5 py-2 rounded-lg font-medium shadow hover:bg-gray-400 transition"
+                           asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                    </div>
+
+                    <!-- Mobile Menu Button -->
+                    <div class="sm:hidden">
+                        <button type="button" class="text-white text-2xl focus:outline-none"
+                                onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                            ☰
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div class="sm:hidden hidden bg-[#4B2E2E] border-t border-gray-700" id="mobile-menu">
+                <div class="px-4 py-3 space-y-2">
+                    <a class="block text-white hover:text-gray-200 text-sm font-medium transition"
+                       asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    <a class="block text-white hover:text-gray-200 text-sm font-medium transition"
+                       asp-area="" asp-controller="Rentals" asp-action="Index">Contact</a>
+                    <a class="block bg-white text-[#4B2E2E] px-3 py-2 rounded-md font-medium shadow hover:bg-gray-100 transition"
+                       asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-gray-600 text-sm border-t border-gray-300">
+        © @DateTime.Now.Year Book Renting Store. All rights reserved.
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

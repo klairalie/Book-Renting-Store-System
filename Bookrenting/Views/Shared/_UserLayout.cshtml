@@ -1,0 +1,91 @@
+@* Views/Shared/_UserLayout.cshtml *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BookRenting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#fdfcf7] font-sans">
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar bg-[#5b4636] text-white shadow-xl flex flex-col transition-all duration-300">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header flex items-center h-16 px-7 border-b border-[#444]">
+                <i data-lucide="book-open" class="w-8 h-8"></i>
+                <span class="label ml-3 text-lg font-bold">Read Books Whole Heartedly</span>
+            </div>
+
+            <!-- Sidebar Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-3">
+                <a href="/RentingStore/Dashboard" class="flex items-center p-3 rounded-lg hover:bg-[#4a3a2c] transition">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                    <span class="label ml-3">Dashboard</span>
+                </a>
+                <a href="" class="flex items-center p-3 rounded-lg hover:bg-[#4a3a2c] transition">
+                    <i data-lucide="book-open" class="w-6 h-6"></i>
+                    <span class="label ml-3">My Books</span>
+                </a>
+                <a href="" class="flex items-center p-3 rounded-lg hover:bg-[#4a3a2c] transition">
+                    <i data-lucide="library" class="w-6 h-6"></i>
+                    <span class="label ml-3">Browse Catalog</span>
+                </a>
+                <a href="/Account/Settings" class="flex items-center p-3 rounded-lg hover:bg-[#4a3a2c] transition">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                    <span class="label ml-3">Settings</span>
+                </a>
+            </nav>
+
+            <!-- Logout at Bottom -->
+            <div class="p-4 border-t border-[#4a3a2c]">
+                <a href="/Account/Login" class="flex items-center p-3 rounded-lg bg-[#a47148] hover:bg-[#8c5d38] transition">
+                    <i data-lucide="log-out" class="w-6 h-6"></i>
+                    <span class="label ml-3">Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            <main class="p-6">
+                @RenderBody()
+            </main>
+            @RenderSection("Scripts", required: false)
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <style>
+        /* Sidebar collapse behavior */
+        .sidebar {
+            width: 5rem; /* collapsed */
+            overflow: hidden;
+        }
+        .sidebar:hover {
+            width: 15rem; /* expanded */
+        }
+        .sidebar .label {
+            display: none;
+        }
+        .sidebar:hover .label {
+            display: inline;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+        }
+        .sidebar a i {
+            margin: 0 auto;
+        }
+        .sidebar:hover a i {
+            margin: 0;
+        }
+    </style>
+</body>
+</html>

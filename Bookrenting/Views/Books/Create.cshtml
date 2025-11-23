@@ -1,0 +1,122 @@
+@model BookRenting.Models.Book
+@{
+    ViewData["Title"] = "Add Book";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8">
+    <!-- Page Title -->
+    <div class="flex items-center mb-6 border-b pb-3">
+        <i data-lucide="book-plus" class="w-7 h-7 text-[#a47148]"></i>
+        <h2 class="text-2xl font-bold ml-3 text-[#2d2a26]">Add New Book</h2>
+    </div>
+
+    <form asp-action="Create" enctype="multipart/form-data" class="space-y-6">
+        <!-- Status -->
+        <div>
+            <label class="block font-semibold mb-1">Book Status</label>
+            <select asp-for="Status" id="statusSelect" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]">
+                <option value="" selected disabled>Select Status</option>
+                <option>Available Digital</option>
+                <option>Available Physical</option>
+            </select>
+        </div>
+
+        <!-- Reference Number (hidden if digital) -->
+        <div id="referenceDiv">
+            <label class="block font-semibold mb-1">Reference Number</label>
+            <input asp-for="ReferenceNumber" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Reference Number"/>
+        </div>
+
+        <!-- Title & Author -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block font-semibold mb-1">Title</label>
+                <input asp-for="Title" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Book Title"/>
+            </div>
+            <div>
+                <label class="block font-semibold mb-1">Author</label>
+                <input asp-for="Author" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Author Name"/>
+            </div>
+        </div>
+
+        <!-- Genre & Price -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block font-semibold mb-1">Genre</label>
+                <select asp-for="Genre" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]">
+                    <option value="" selected disabled>Select Genre</option>
+                    <option>Fiction</option>
+                    <option>Non-Fiction</option>
+                    <option>Science-Fiction</option>
+                    <option>History</option>
+                    <option>Biography</option>
+                    <option>Others</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold mb-1">Price</label>
+                <input asp-for="Price" type="number" step="0.01" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Price"/>
+            </div>
+        </div>
+
+        <!-- Digital Book File -->
+        <div id="fileDiv">
+            <label class="block font-semibold mb-1">Digital Book File (PDF only)</label>
+            <input type="file" name="bookFile" accept=".pdf" class="w-full border px-2 py-1 rounded focus:ring-[#a47148] focus:border-[#a47148]"/>
+        </div>
+
+        <!-- Physical Book Image -->
+        <div id="imageDiv">
+            <label class="block font-semibold mb-1">Physical Book Image (JPG, JPEG, PNG)</label>
+            <input type="file" name="bookImage" accept=".jpg,.jpeg,.png" class="w-full border px-2 py-1 rounded focus:ring-[#a47148] focus:border-[#a47148]"/>
+        </div>
+
+        <!-- Synopsis -->
+        <div>
+            <label class="block font-semibold mb-1">Synopsis</label>
+            <textarea asp-for="Synopsis" rows="4" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Short description of the book..."></textarea>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-right">
+            <button type="submit" class="px-6 py-2 bg-[#a47148] text-white font-semibold rounded-lg shadow hover:bg-[#8c5d38] transition">
+                <i data-lucide="plus-circle" class="inline-block w-5 h-5 mr-1"></i>
+                Add Book
+            </button>
+            <button type="button" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition">
+                <a asp-action="Index">Cancel</a>
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    const statusSelect = document.getElementById('statusSelect');
+    const referenceDiv = document.getElementById('referenceDiv');
+    const imageDiv = document.getElementById('imageDiv');
+    const fileDiv = document.getElementById('fileDiv');
+
+    function toggleFields() {
+        if (statusSelect.value === 'Available Digital') {
+            referenceDiv.style.display = 'none';   // hide Reference Number
+            imageDiv.style.display = 'none';       // hide Image
+            fileDiv.style.display = 'block';       // show File upload
+        } else if (statusSelect.value === 'Available Physical') {
+            referenceDiv.style.display = 'block';  // show Reference Number
+            imageDiv.style.display = 'block';      // show Image
+            fileDiv.style.display = 'none';        // hide File upload
+        } else {
+            referenceDiv.style.display = 'none';
+            imageDiv.style.display = 'none';
+            fileDiv.style.display = 'none';
+        }
+    }
+
+    statusSelect.addEventListener('change', toggleFields);
+    toggleFields(); // Run once on load
+
+    lucide.createIcons(); // activate icons
+</script>
+}

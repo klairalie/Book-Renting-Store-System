@@ -1,0 +1,112 @@
+@* Views/Shared/_AdminLayout.cshtml *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - BookRenting Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Collapsible Sidebar */
+        .sidebar {
+            width: 4rem; /* collapsed */
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        .sidebar:hover {
+            width: 16rem; /* expanded */
+        }
+
+        /* Label visibility */
+        .sidebar .label {
+            display: none;
+        }
+        .sidebar:hover .label {
+            display: inline;
+        }
+
+        /* Center icons when collapsed */
+        .sidebar a {
+            justify-content: center;
+        }
+        .sidebar:hover a {
+            justify-content: flex-start;
+        }
+
+        /* Header icon alignment */
+        .sidebar-header {
+            justify-content: center;
+        }
+        .sidebar:hover .sidebar-header {
+            justify-content: flex-start;
+        }
+    </style>
+</head>
+<body class="bg-[#fdfcf8] font-sans">
+
+    <!-- Sidebar + Main Content -->
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar bg-[#2d2a26] text-white shadow-lg flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header flex items-center h-16 px-4 border-b border-[#444]">
+                <i data-lucide="book-open" class="w-6 h-6"></i>
+                <span class="label ml-3 text-lg font-bold">BookRenting Admin</span>
+            </div>
+
+            <!-- Sidebar Navigation -->
+            <nav class="flex-1 p-4 space-y-3">
+                <a href="/Admin/AdminDashboard" 
+                   class="flex items-center p-2 rounded hover:bg-[#3d3a35] transition">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span class="label ml-3">Dashboard</span>
+                </a>
+                <a href="/Books" 
+                   class="flex items-center p-2 rounded hover:bg-[#3d3a35] transition">
+                    <i data-lucide="book" class="w-5 h-5"></i>
+                    <span class="label ml-3">Manage Books</span>
+                </a>
+                <a href="#" 
+                   class="flex items-center p-2 rounded hover:bg-[#3d3a35] transition">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span class="label ml-3">Users</span>
+                </a>
+                <!-- Settings (now looks like Logout style) -->
+<a href="/Settings"
+   class="flex items-center p-2 rounded hover:bg-[#3d3a35] transition">
+    <i data-lucide="settings" class="w-5 h-5"></i>
+    <span class="label ml-3">Settings</span>
+</a>
+
+             
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            <!-- Main Header -->
+            <header class="flex items-center h-16 px-6 bg-white shadow border-b justify-between">
+                <h1 class="text-2xl font-semibold text-[#2d2a26]">
+                    Welcome, @User.Identity?.Name!
+                </h1>
+              <a href="/Account/Login"
+   class="px-4 py-2 bg-[#a47148] text-white rounded hover:bg-[#8c5d38] transition">
+    Logout
+</a>
+            </header>
+
+            <!-- Rendered Body -->
+            <main class="p-6">
+                @RenderBody()
+            </main>
+
+            @RenderSection("Scripts", required: false)
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons(); // activate icons
+    </script>
+</body>
+</html>

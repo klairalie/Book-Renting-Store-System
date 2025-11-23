@@ -1,0 +1,185 @@
+@model BookRenting.Models.RegisterUser
+@{
+    ViewData["Title"] = "Complete Your Profile";
+}
+
+<div class="flex justify-center items-center my-12">
+    <form id="completeProfileForm" asp-action="CompleteProfile" asp-controller="Account" method="post" 
+          class="bg-transparent shadow-md rounded-lg p-6 w-full max-w-2xl space-y-6">
+        @Html.AntiForgeryToken()
+
+        <h2 class="text-2xl font-bold text-gray-800 text-center">Complete Your Profile</h2>
+
+        <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
+
+        <div class="grid grid-cols-2 gap-6">
+            <!-- First Name -->
+            <div>
+                <label class="block text-gray-700 font-medium">First Name</label>
+                <input asp-for="FirstName" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="FirstName" class="text-red-500"></span>
+            </div>
+
+            <!-- Last Name -->
+            <div>
+                <label class="block text-gray-700 font-medium">Last Name</label>
+                <input asp-for="LastName" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="LastName" class="text-red-500"></span>
+            </div>
+
+            <!-- Age -->
+            <div>
+                <label class="block text-gray-700 font-medium">Age</label>
+                <input asp-for="Age" type="number" min="1" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="Age" class="text-red-500"></span>
+            </div>
+
+            <!-- Birthdate -->
+            <div>
+                <label class="block text-gray-700 font-medium">Birthdate</label>
+                <input asp-for="Birthdate" type="date" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="Birthdate" class="text-red-500"></span>
+            </div>
+
+            <!-- Address -->
+            <div class="col-span-2 relative">
+                <label class="block text-gray-700 font-medium">Address</label>
+                <input asp-for="Address" id="AddressInput" autocomplete="off"
+                       class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="Address" class="text-red-500"></span>
+            </div>
+
+            <!-- Contact Number -->
+            <div>
+                <label class="block text-gray-700 font-medium">Contact Number</label>
+                <input asp-for="ContactNumber" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="ContactNumber" class="text-red-500"></span>
+            </div>
+
+            <!-- Email (prefilled from Google) -->
+            <div class="col-span-2">
+                <label class="block text-gray-700 font-medium">Email</label>
+                <input asp-for="Email" readonly class="mt-1 w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed" />
+                <span asp-validation-for="Email" class="text-red-500"></span>
+            </div>
+
+            <!-- Username (prefilled from Google, editable) -->
+<div class="col-span-2">
+    <label class="block text-gray-700 font-medium">Username</label>
+    <input asp-for="UserName" 
+           class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" 
+           placeholder="Enter a unique username with letters, numbers, or symbols" />
+    <span asp-validation-for="UserName" class="text-red-500"></span>
+</div>
+
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="w-full bg-gray-500 hover:bg-gray-400 text-white font-semibold py-3 rounded-lg shadow items-center">
+                Complete Profile
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Prevent form submission if validation fails
+            $('#completeProfileForm').submit(function (e) {
+                if (!$(this).valid()) {
+                    e.preventDefault();
+                    alert("Please fix validation errors before continuing.");
+                    return false;
+                }
+            });
+        });
+
+        // === Address autocomplete script (same as before) ===
+        (function () {
+            const addressInput = document.getElementById('AddressInput');
+            if (!addressInput) return;
+
+            const sugg = document.createElement('div');
+            sugg.id = 'addressSuggestions';
+            sugg.style.position = 'absolute';
+            sugg.style.zIndex = '50';
+            sugg.style.background = 'white';
+            sugg.style.border = '1px solid #e5e7eb';
+            sugg.style.width = addressInput.offsetWidth + 'px';
+            sugg.style.maxHeight = '200px';
+            sugg.style.overflowY = 'auto';
+            sugg.className = 'rounded-md shadow-sm';
+            sugg.style.top = (addressInput.offsetTop + addressInput.offsetHeight) + 'px';
+            sugg.style.left = addressInput.offsetLeft + 'px';
+            addressInput.parentNode.style.position = 'relative';
+            addressInput.parentNode.appendChild(sugg);
+
+            function debounce(fn, ms) {
+                let t;
+                return function (...args) {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn.apply(this, args), ms);
+                };
+            }
+
+            function nominatimUrl(q) {
+                const base = 'https://nominatim.openstreetmap.org/search';
+                const params = new URLSearchParams({
+                    q,
+                    format: 'jsonv2',
+                    addressdetails: '1',
+                    limit: '6',
+                    countrycodes: 'ph'
+                });
+                return `${base}?${params.toString()}`;
+            }
+
+            function showSuggestions(items) {
+                sugg.innerHTML = '';
+                if (!items || items.length === 0) {
+                    sugg.style.display = 'none';
+                    return;
+                }
+                items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm';
+                    row.textContent = item.display_name;
+                    row.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        addressInput.value = item.display_name;
+                        sugg.style.display = 'none';
+                    });
+                    sugg.appendChild(row);
+                });
+                sugg.style.display = 'block';
+            }
+
+            const search = debounce(async function () {
+                const q = addressInput.value.trim();
+                if (q.length < 3) { showSuggestions([]); return; }
+                try {
+                    const res = await fetch(nominatimUrl(q), { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) { showSuggestions([]); return; }
+                    const data = await res.json();
+                    showSuggestions(data);
+                } catch (err) {
+                    console.error('Address lookup failed', err);
+                    showSuggestions([]);
+                }
+            }, 500);
+
+            addressInput.addEventListener('input', search);
+            addressInput.addEventListener('blur', () => setTimeout(() => { sugg.style.display = 'none'; }, 150));
+            addressInput.addEventListener('focus', () => {
+                if (sugg.childElementCount) sugg.style.display = 'block';
+            });
+            window.addEventListener('resize', () => {
+                sugg.style.width = addressInput.offsetWidth + 'px';
+            });
+        })();
+    </script>
+}

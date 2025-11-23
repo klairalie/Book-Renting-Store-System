@@ -1,0 +1,110 @@
+@model BookRenting.Models.Book
+
+@{
+    ViewData["Title"] = "Edit Book";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2 class="text-2xl font-bold mb-4">Edit Book</h2>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="space-y-4">
+    <input type="hidden" asp-for="Id" />
+
+    <!-- Status first -->
+    <div>
+        <label class="block font-semibold">Status</label>
+        <select asp-for="Status" id="statusSelect" class="w-full border px-2 py-1 rounded">
+            <option value="" disabled>Select Status</option>
+            <option value="Available Digital">Available Digital</option>
+            <option value="Available Physical">Available Physical</option>
+        </select>
+        <span asp-validation-for="Status" class="text-red-600"></span>
+    </div>
+
+    <!-- Reference Number (hidden if digital) -->
+    <div id="referenceDiv">
+        <label class="block font-semibold">Reference Number</label>
+        <input asp-for="ReferenceNumber" class="w-full border px-2 py-1 rounded" />
+        <span asp-validation-for="ReferenceNumber" class="text-red-600"></span>
+    </div>
+
+    <div>
+        <label class="block font-semibold">Title</label>
+        <input asp-for="Title" class="w-full border px-2 py-1 rounded" />
+        <span asp-validation-for="Title" class="text-red-600"></span>
+    </div>
+
+    <div>
+        <label class="block font-semibold">Author</label>
+        <input asp-for="Author" class="w-full border px-2 py-1 rounded" />
+        <span asp-validation-for="Author" class="text-red-600"></span>
+    </div>
+
+    <div>
+        <label class="block font-semibold">Genre</label>
+        <input asp-for="Genre" class="w-full border px-2 py-1 rounded" />
+        <span asp-validation-for="Genre" class="text-red-600"></span>
+    </div>
+
+    <div>
+        <label class="block font-semibold">Price</label>
+        <input asp-for="Price" type="number" step="0.01" class="w-full border px-2 py-1 rounded" />
+        <span asp-validation-for="Price" class="text-red-600"></span>
+    </div>
+
+    <div>
+    <label class="block font-semibold">Synopsis</label>
+    <textarea asp-for="Synopsis" rows="4" class="w-full border px-2 py-1 rounded"></textarea>
+    <span asp-validation-for="Synopsis" class="text-red-600"></span>
+</div>
+
+
+    <!-- Digital Book File -->
+    <div>
+        <label class="block font-semibold">Digital Book File (PDF only)</label>
+        <input name="bookFile" type="file" accept=".pdf" class="w-full border px-2 py-1 rounded" />
+        @if (!string.IsNullOrEmpty(Model.FilePath))
+        {
+            <span class="text-gray-600 text-sm">Current file: <a href="@Model.FilePath" target="_blank">View PDF</a></span>
+        }
+    </div>
+
+    <!-- Physical Book Image (hidden if digital) -->
+    <div id="imageDiv">
+        <label class="block font-semibold">Physical Book Image (JPG, JPEG, PNG, GIF)</label>
+        <input name="bookImage" type="file" accept=".jpg,.jpeg,.png,.gif" class="w-full border px-2 py-1 rounded" />
+        @if (!string.IsNullOrEmpty(Model.ImagePath))
+        {
+            <img src="@Model.ImagePath" alt="Book Image" class="mt-2 w-32 h-auto" />
+        }
+    </div>
+
+    <div class="space-x-2">
+        <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Save</button>
+        <a asp-action="Index" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</a>
+    </div>
+</form>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const statusSelect = document.getElementById('statusSelect');
+        const referenceDiv = document.getElementById('referenceDiv');
+        const imageDiv = document.getElementById('imageDiv');
+
+        function toggleFields() {
+            if (statusSelect.value === 'Available Digital') {
+                referenceDiv.style.display = 'none';
+                imageDiv.style.display = 'none';
+            } else {
+                referenceDiv.style.display = 'block';
+                imageDiv.style.display = 'block';
+            }
+        }
+
+        statusSelect.addEventListener('change', toggleFields);
+        // Run on page load in case of validation errors
+        toggleFields();
+    </script>
+}

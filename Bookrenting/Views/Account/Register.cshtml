@@ -1,0 +1,307 @@
+@model BookRenting.Models.RegisterUser
+@{
+    ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="flex justify-center items-center my-12">
+    <form asp-action="Register" asp-controller="Account" method="post" class="bg-transparent shadow-md rounded-lg p-6 w-full max-w-2xl space-y-6">
+        @Html.AntiForgeryToken()
+
+        <h2 class="text-2xl font-bold text-gray-800 text-center">Create an Account</h2>
+
+        <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
+
+        <div class="grid grid-cols-2 gap-6">
+            <div>
+                <label class="block text-gray-700 font-medium">First Name</label>
+                <input asp-for="FirstName" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="FirstName" class="text-red-500"></span>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Last Name</label>
+                <input asp-for="LastName" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="LastName" class="text-red-500"></span>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Age</label>
+                <input asp-for="Age" type="number" min="1" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="Age" class="text-red-500"></span>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Birthdate</label>
+                <input asp-for="Birthdate" type="date" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="Birthdate" class="text-red-500"></span>
+            </div>
+
+            <!-- Address with autocomplete -->
+            <div class="col-span-2 relative">
+                <label class="block text-gray-700 font-medium">Address</label>
+                <input asp-for="Address" id="AddressInput" autocomplete="off"
+                       class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="Address" class="text-red-500"></span>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Contact Number</label>
+                <input asp-for="ContactNumber" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="ContactNumber" class="text-red-500"></span>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Username</label>
+                <input asp-for="UserName" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="UserName" class="text-red-500"></span>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Password</label>
+                <div class="relative flex items-center">
+                    <input asp-for="Password" id="Password" type="password" class="mt-1 w-full border rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-rose-400" />
+                    <button type="button" onclick="togglePassword('Password','togglePasswordIcon')" class="absolute right-3 text-gray-500">
+                        <svg id="togglePasswordIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                <span asp-validation-for="Password" class="text-red-500"></span>
+            </div>
+
+            <div class="col-span-2">
+                <label class="block text-gray-700 font-medium">Confirm Password</label>
+                <div class="relative flex items-center">
+                    <input asp-for="ConfirmPassword" id="ConfirmPassword" type="password" class="mt-1 w-full border rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-rose-400" />
+                    <button type="button" onclick="togglePassword('ConfirmPassword','toggleConfirmPasswordIcon')" class="absolute right-3 text-gray-500">
+                        <svg id="toggleConfirmPasswordIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="text-red-500"></span>
+            </div>
+        </div>
+
+         <!-- Email + Send OTP -->
+            <div class="col-span-2">
+                <label class="block text-gray-700 font-medium">Email</label>
+                <div class="flex gap-2 items-center">
+                    <input asp-for="Email" id="EmailInput" type="email" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                    <button type="button" id="sendOtpBtn" class="bg-gray-500 hover:bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg">
+                       
+                        Send OTP
+                    </button>
+                </div>
+                <span asp-validation-for="Email" class="text-red-500"></span>
+            </div>
+
+            <!-- OTP Input + Countdown -->
+            <div id="otpSection" class="col-span-2 hidden">
+                <label class="block text-gray-700 font-medium">OTP</label>
+                <input asp-for="OTP" id="OTPInput" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-rose-400" />
+                <span asp-validation-for="OTP" class="text-red-500"></span>
+                <p id="otpCountdown" class="text-sm text-gray-500 mt-1">OTP expires in: 03:00</p>
+            </div>
+
+
+        <!-- Submit Button -->
+<div class="col-span-2">
+    <button type="submit" 
+        class="w-full bg-gray-500 hover:bg-gray-400 text-white font-semibold py-3 rounded-lg shadow transition">
+        Register
+    </button>
+</div>
+
+</div>
+
+    </form>
+</div>
+
+   @section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        let countdownInterval;
+
+        // === OTP handling ===
+        document.getElementById('sendOtpBtn').addEventListener('click', async function () {
+            const email = document.getElementById('EmailInput').value;
+            if (!email) { alert("Please enter your email."); return; }
+
+            const response = await fetch('@Url.Action("SendOtp", "Account")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(email)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert("OTP sent to your email.");
+                const otpSection = document.getElementById('otpSection');
+                otpSection.classList.remove('hidden');
+
+                // Start 3-minute countdown
+                let timeLeft = 180; // seconds
+                const countdownEl = document.getElementById('otpCountdown');
+                countdownEl.textContent = formatTime(timeLeft);
+
+                clearInterval(countdownInterval);
+                countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    countdownEl.textContent = `OTP expires in: ${formatTime(timeLeft)}`;
+                    if (timeLeft <= 0) clearInterval(countdownInterval);
+                }, 1000);
+            } else {
+                alert(data.message);
+            }
+        });
+
+        function formatTime(seconds) {
+            const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const sec = String(seconds % 60).padStart(2, '0');
+            return `${min}:${sec}`;
+        }
+
+        // === Password toggle ===
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input) return;
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.956 9.956 0 012.271-3.568m3.045-2.46A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.956 9.956 0 01-4.107 5.132M15 12a3 3 0 11-6 0 3 3 0 016 0z" />`;
+            } else {
+                input.type = "password";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+            }
+        }
+
+        // === Address autocomplete (Nominatim, no API key) ===
+        (function () {
+            const addressInput = document.getElementById('AddressInput');
+            if (!addressInput) return;
+
+            const sugg = document.createElement('div');
+            sugg.id = 'addressSuggestions';
+            sugg.style.position = 'absolute';
+            sugg.style.zIndex = '50';
+            sugg.style.background = 'white';
+            sugg.style.border = '1px solid #e5e7eb';
+            sugg.style.width = addressInput.offsetWidth + 'px';
+            sugg.style.maxHeight = '200px';
+            sugg.style.overflowY = 'auto';
+            sugg.className = 'rounded-md shadow-sm';
+
+            sugg.style.top = (addressInput.offsetTop + addressInput.offsetHeight) + 'px';
+            sugg.style.left = addressInput.offsetLeft + 'px';
+
+            addressInput.parentNode.style.position = 'relative';
+            addressInput.parentNode.appendChild(sugg);
+
+            function debounce(fn, ms) {
+                let t;
+                return function (...args) {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn.apply(this, args), ms);
+                };
+            }
+
+            function nominatimUrl(q) {
+                const base = 'https://nominatim.openstreetmap.org/search';
+                const params = new URLSearchParams({
+                    q,
+                    format: 'jsonv2',
+                    addressdetails: '1',
+                    limit: '6',
+                    countrycodes: 'ph'
+                });
+                return `${base}?${params.toString()}`;
+            }
+
+            function showSuggestions(items) {
+                sugg.innerHTML = '';
+                if (!items || items.length === 0) {
+                    sugg.style.display = 'none';
+                    return;
+                }
+                items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm';
+                    row.textContent = item.display_name;
+                    row.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        addressInput.value = item.display_name;
+                        sugg.style.display = 'none';
+                    });
+                    sugg.appendChild(row);
+                });
+                sugg.style.display = 'block';
+            }
+
+            const search = debounce(async function () {
+                const q = addressInput.value.trim();
+                if (q.length < 3) { showSuggestions([]); return; }
+                try {
+                    const res = await fetch(nominatimUrl(q), { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) { showSuggestions([]); return; }
+                    const data = await res.json();
+                    showSuggestions(data);
+                } catch (err) {
+                    console.error('Address lookup failed', err);
+                    showSuggestions([]);
+                }
+            }, 500);
+
+            addressInput.addEventListener('input', search);
+            addressInput.addEventListener('blur', () => setTimeout(() => { sugg.style.display = 'none'; }, 150));
+            addressInput.addEventListener('focus', () => {
+                if (sugg.childElementCount) sugg.style.display = 'block';
+            });
+            window.addEventListener('resize', () => {
+                sugg.style.width = addressInput.offsetWidth + 'px';
+            });
+        })();
+
+        // === Real-time validation ===
+        $(function () {
+            $("form").on("input", "input, select, textarea", function () {
+                const $field = $(this);
+
+                // Skip too-early nagging
+                if ($field.attr("name")?.toLowerCase().includes("email") && $field.val().length < 3) return;
+                if ($field.attr("name")?.toLowerCase().includes("password") && $field.val().length === 0) return;
+
+                $field.valid();
+            });
+
+            // Debounced server-side email availability check
+            let debounceTimer;
+            $("#EmailInput").on("input", function () {
+                clearTimeout(debounceTimer);
+                const email = this.value;
+                if (email.length < 5) return;
+
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const res = await fetch('@Url.Action("CheckEmail", "Account")?email=' + encodeURIComponent(email));
+                        const data = await res.json();
+                        if (!data.available) {
+                            const $errorSpan = $("span[data-valmsg-for='Email']");
+                            $errorSpan.text("This email is already taken.").addClass("text-red-500");
+                        }
+                    } catch (err) {
+                        console.error("Email check failed", err);
+                    }
+                }, 500);
+            });
+        });
+    </script>
+}
+
+
