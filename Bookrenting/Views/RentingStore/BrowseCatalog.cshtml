@@ -1,0 +1,108 @@
+@model IEnumerable<BookRenting.Models.Book>
+
+@{
+    ViewData["Title"] = "Browse Catalog";
+    Layout = "~/Views/Shared/_UserLayout.cshtml";
+}
+
+<h1 class="text-2xl font-bold mb-4 text-gray-800">Browse Catalog</h1>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    @foreach (var book in Model)
+    {
+        var modalId = "modal-" + book.Id;
+
+        <div class="border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
+
+            <!-- IMAGE OR DIGITAL PLACEHOLDER -->
+            @if (!string.IsNullOrEmpty(book.FilePath))
+            {
+                <!-- Digital book: colored background with PDF label -->
+                <div class="w-full h-48 bg-black flex items-center justify-center text-white font-bold text-xl">
+                    PDF
+                </div>
+            }
+            else
+            {
+                <!-- Physical book image -->
+                <img
+                    src="@(book.ImagePath ?? "/images/default-book.png")"
+                    alt="@book.Title"
+                    class="w-full h-48 object-cover"
+                />
+            }
+
+            <div class="p-3">
+                <h2 class="text-lg font-semibold mb-1">@book.Title</h2>
+                <p class="text-gray-600 text-sm mb-0.5"><strong>Author:</strong> @book.Author</p>
+                <p class="text-gray-600 text-sm mb-0.5"><strong>Genre:</strong> @book.Genre</p>
+                <p class="text-gray-600 text-sm mb-0.5"><strong>Price:</strong> ₱@book.Price.ToString("0.00")</p>
+
+                <p class="text-gray-600 text-sm mb-1">
+                    <strong>Status:</strong>
+                    @if (!string.IsNullOrEmpty(book.FilePath))
+                    {
+                        <span class="text-green-600 font-semibold">Digital</span>
+                    }
+                    else
+                    {
+                        <span class="text-blue-600 font-semibold">Physical</span>
+                    }
+                </p>
+
+                <p class="text-gray-700 text-sm mb-2 line-clamp-2">@book.Synopsis</p>
+
+                <div class="flex justify-between items-center">
+                    <!-- View Details -->
+                    <button 
+                        type="button"
+                        onclick="document.getElementById('@modalId').classList.remove('hidden')" 
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-sm"
+                    >
+                        View Details
+                    </button>
+
+                    <!-- Read Online (disabled until rented/approved) -->
+                    @if (!string.IsNullOrEmpty(book.FilePath))
+                    {
+                        <button 
+                            type="button"
+                            class="bg-green-500 text-white px-3 py-1.5 rounded text-sm opacity-50 cursor-not-allowed"
+                            disabled>
+                            Read Online
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL -->
+        <div 
+            id="@modalId" 
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+            <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-4 relative">
+                <h2 class="text-xl font-bold mb-3">@book.Title</h2>
+                <p class="text-gray-700 text-sm mb-1"><strong>Author:</strong> @book.Author</p>
+                <p class="text-gray-700 text-sm mb-3"><strong>Synopsis:</strong> @book.Synopsis</p>
+
+               <div class="flex justify-end gap-2">
+    <a 
+    href="/RentingStore/RentBook/@book.Id"
+    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm"
+>
+    Rent
+</a>
+
+    <button 
+        type="button"
+        onclick="document.getElementById('@modalId').classList.add('hidden')" 
+        class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1.5 rounded text-sm">
+        Close
+    </button>
+</div>
+
+            </div>
+        </div>
+    }
+</div>

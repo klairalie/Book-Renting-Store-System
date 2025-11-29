@@ -189,5 +189,15 @@ public async Task<IActionResult> Edit(int id, Book book, IFormFile? bookFile, IF
             }
             return RedirectToAction(nameof(Index));
         }
+
+       // GET: Books/BrowseCatalog
+// GET: Books/BrowseCatalog
+public async Task<IActionResult> BrowseCatalog()
+{
+    var books = await _context.Books.ToListAsync();
+    return View("~/Views/RentingStore/BrowseCatalog.cshtml", books);
+}
+
+
     }
 }

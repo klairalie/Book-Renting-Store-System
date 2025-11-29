@@ -309,5 +309,14 @@ public async Task<IActionResult> GoogleResponse()
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }
+
+        public IActionResult RentBook(int id)
+{
+    var book = _context.Books.FirstOrDefault(b => b.Id == id);
+    if (book == null) return NotFound();
+
+    return View(book);
+}
+
     }
 }

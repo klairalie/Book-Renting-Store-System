@@ -10,10 +10,9 @@ namespace BookRenting.Models
         [Column("id")]
         public int Id { get; set; }
 
-        [Required]
         [Column("reference_number")]
         [Display(Name = "Reference Number")]
-        public string ReferenceNumber { get; set; } = null!;
+        public string? ReferenceNumber { get; set; }
 
         [Required]
         [Column("title")]
@@ -29,11 +28,10 @@ namespace BookRenting.Models
 
         [Required]
         [Column("status")]
-        public string Status { get; set; } = null!; // Available Digital, Available Physical, etc.
+        public string Status { get; set; } = null!;
 
         [Required]
         [Column("price")]
-        [DataType(DataType.Currency)]
         public decimal Price { get; set; }
 
         [Column("image_path")]

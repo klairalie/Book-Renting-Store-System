@@ -1,0 +1,431 @@
+@model BookRenting.Models.RentedBook
+
+@{
+ViewData["Title"] = "Rent Book";
+Layout = "~/Views/Shared/_UserLayout.cshtml";
+}
+
+<h2 class="text-2xl font-semibold mb-4 text-gray-800">Rent This Book</h2>
+
+<form asp-action="RentBookSubmit" method="post" enctype="multipart/form-data" class="bg-white p-5 rounded shadow-md max-w-2xl mx-auto space-y-4">
+    @Html.AntiForgeryToken()
+
+```
+<!-- USER INFO -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium">Full Name</label>
+        <input asp-for="FullName" class="w-full border rounded p-2.5 text-sm" readonly required />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Email</label>
+        <input asp-for="Email" class="w-full border rounded p-2.5 text-sm" readonly required />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Contact Number</label>
+        <input asp-for="ContactNumber" class="w-full border rounded p-2.5 text-sm" readonly required/>
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Address</label>
+        <input asp-for="Address" class="w-full border rounded p-2.5 text-sm" readonly required/>
+    </div>
+</div>
+
+<!-- BOOK INFO -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium">Book Title</label>
+        <input asp-for="BookTitle" class="w-full border rounded p-2.5 text-sm" readonly />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Author</label>
+        <input asp-for="Author" class="w-full border rounded p-2.5 text-sm" readonly />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Book Type</label>
+        <input asp-for="BookType"
+               id="bookTypeValue"
+               class="w-full border rounded p-2.5 text-sm"
+               readonly
+               value="@(Model.Status != null ? Model.Status.Split(' ').Last() : "")" />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Book Price</label>
+        <input asp-for="BookPrice" id="bookPriceField" class="w-full border rounded p-2.5 text-sm" readonly />
+    </div>
+</div>
+
+<!-- RENT INFO -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium">Borrow Date</label>
+        <input asp-for="BorrowDate" type="date" id="BorrowDate" class="w-full border rounded p-2.5 text-sm" required />
+    </div>
+
+    <!-- Return Date for Digital Books -->
+    <div id="returnDateContainer" class="hidden">
+        <label class="block text-sm font-medium">Return Date</label>
+        <input asp-for="ReturnDate" id="returnDate" type="date" class="w-full border rounded p-2.5 text-sm"/>
+        <p class="text-xs text-gray-500">Note: Total payment is Book Price + 20 PHP per day.</p>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium">Borrow Type</label>
+        <select asp-for="BorrowType" id="borrowType" class="w-full border rounded p-2.5 text-sm" required>
+            <option value="">Select Type</option>
+            <option value="walkin">Walk-in</option>
+            <option value="ship">Ship</option>
+            <option value="softcopy">Soft-Copy</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Deposit</label>
+        <input asp-for="Deposit" id="depositField" class="w-full border rounded p-2.5 text-sm" readonly />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Shipping Fee</label>
+        <input asp-for="ShippingFee" id="shipFeeField" class="w-full border rounded p-2.5 text-sm" readonly />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Total Payment</label>
+        <input asp-for="PaymentTotal" id="totalPaymentField" class="w-full border rounded p-2.5 text-sm bg-gray-100" readonly />
+    </div>
+    <div>
+        <label class="block text-sm font-medium">Payment Mode</label>
+        <select asp-for="PaymentMode" id="paymentMode" class="w-full border rounded p-2.5 text-sm" required>
+            <option value="">Select....</option>
+            <option value="cash">Cash</option>
+            <option value="gcash">GCash</option>
+        </select>
+    </div>
+
+    <!-- GCash Hidden Inputs -->
+    <input type="hidden" asp-for="ReferenceNumber" id="referenceNumberHidden" />
+    <input type="hidden" name="amountPaid" id="amountPaidHidden" />
+</div>
+
+<button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full text-sm">
+    Submit Rent Request
+</button>
+
+<!-- GCash Modal INSIDE FORM -->
+<div id="gcashModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-5 rounded shadow-md w-96 relative">
+        <button id="closeModal" class="absolute top-2 right-2 text-gray-500">&times;</button>
+
+        <h3 class="text-lg font-semibold mb-2">GCash Payment</h3>
+
+        <div class="mb-4 text-center">
+            <img src="/images/gcash-qr.png" alt="GCash QR Code" class="mx-auto w-48 h-48"/>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium">Upload Receipt</label>
+            <input type="file" id="receiptInput" accept="image/*" class="w-full"/>
+            <img id="receiptPreview" class="mt-2 w-full h-40 object-contain hidden"/>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium">Reference Number</label>
+            <input type="text" id="referenceNumber" class="w-full border rounded p-2.5" readonly/>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium">Amount Paid</label>
+            <input type="number" step="0.01" id="amountPaid" class="w-full border rounded p-2.5"/>
+        </div>
+
+        <button id="confirmPayment" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full">
+            Complete Payment
+        </button>
+    </div>
+</div>
+```
+
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const bookType = document.getElementById("bookTypeValue").value.toLowerCase();
+    const borrowType = document.getElementById("borrowType");
+
+    if (bookType === "digital") {
+        document.getElementById("returnDateContainer").classList.remove("hidden");
+        borrowType.value = "softcopy";
+        borrowType.disabled = true;
+        document.getElementById("depositField").value = 0;
+        document.getElementById("shipFeeField").value = 0;
+        const cashOption = document.querySelector('#paymentMode option[value="cash"]');
+        if (cashOption) cashOption.remove();
+    } else {
+        document.getElementById("depositField").value = 500;
+        document.getElementById("shipFeeField").value = 100;
+    }
+    updatePayment();
+});
+
+function updatePayment() {
+    let bookPrice = parseFloat(document.getElementById("bookPriceField").value) || 0;
+    let deposit = parseFloat(document.getElementById("depositField").value) || 0;
+    let shipping = parseFloat(document.getElementById("shipFeeField").value) || 0;
+    let total = deposit + shipping + bookPrice;
+
+    let bookType = document.getElementById("bookTypeValue").value.toLowerCase();
+    if (bookType === "digital") {
+        let borrowDate = new Date(document.getElementById("BorrowDate").value);
+        let returnDate = new Date(document.getElementById("returnDate").value);
+        if (returnDate > borrowDate) {
+            let diffDays = Math.ceil((returnDate - borrowDate) / 86400000);
+            total = bookPrice + (diffDays * 20);
+        }
+    }
+    document.getElementById("totalPaymentField").value = total.toFixed(2);
+}
+
+document.getElementById("borrowType").addEventListener("change", function () {
+    const bookType = document.getElementById("bookTypeValue").value.toLowerCase();
+    if (bookType === "digital") return;
+    let type = this.value;
+    let depositField = document.getElementById("depositField");
+    let shippingField = document.getElementById("shipFeeField");
+    if (type === "ship") {
+        depositField.value = 500;
+        shippingField.value = 100;
+    } else if (type === "walkin") {
+        depositField.value = 150;
+        shippingField.value = 0;
+    } else {
+        depositField.value = "";
+        shippingField.value = "";
+    }
+    updatePayment();
+});
+
+document.getElementById("BorrowDate").addEventListener("change", updatePayment);
+document.getElementById("returnDate")?.addEventListener("change", updatePayment);
+
+/* GCASH MODAL LOGIC */
+const paymentMode = document.getElementById("paymentMode");
+const gcashModal = document.getElementById("gcashModal");
+const closeModal = document.getElementById("closeModal");
+const receiptInput = document.getElementById("receiptInput");
+const receiptPreview = document.getElementById("receiptPreview");
+const referenceNumber = document.getElementById("referenceNumber");
+const amountPaid = document.getElementById("amountPaid");
+const confirmPayment = document.getElementById("confirmPayment");
+
+paymentMode.addEventListener("change", function() {
+    gcashModal.classList.toggle("hidden", this.value !== "gcash");
+});
+closeModal.addEventListener("click", () => gcashModal.classList.add("hidden"));
+
+receiptInput.addEventListener("change", function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptPreview.src = e.target.result;
+        receiptPreview.classList.remove("hidden");
+        Tesseract.recognize(e.target.result, "eng")
+        .then(({ data: { text } }) => {
+            const match = text.match(/Ref\s*No\.?\s*(\d{4}\s\d{3}\s\d{6})/i);
+            referenceNumber.value = match ? match[1] : "";
+            if (!match) alert("Reference number not detected.");
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+confirmPayment.addEventListener("click", function(e) {
+    e.preventDefault();
+    const paid = parseFloat(amountPaid.value);
+    const total = parseFloat(document.getElementById("totalPaymentField").value);
+    if (paid !== total) { alert("Amount paid does not match total payment!"); return; }
+    document.getElementById("referenceNumberHidden").value = referenceNumber.value;
+    document.getElementById("amountPaidHidden").value = paid;
+    document.querySelector("form").submit();
+});
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+
+<script>
+
+/* ============================================================
+   SYNC HIDDEN INPUTS BEFORE SUBMIT
+============================================================ */
+document.querySelector("form").addEventListener("submit", function () {
+    document.getElementById("hiddenBookType").value =
+        document.getElementById("bookTypeValue").value;
+
+    document.getElementById("hiddenReturnDate").value =
+        document.getElementById("returnDate")?.value || "";
+
+    document.getElementById("hiddenPaymentTotal").value =
+        document.getElementById("totalPaymentField").value;
+
+    document.getElementById("hiddenReferenceNumber").value =
+        document.getElementById("referenceNumber").value;
+
+    document.getElementById("hiddenAmountPaid").value =
+        document.getElementById("amountPaid").value;
+});
+
+
+/* ============================================================
+   UPDATE PAYMENT
+============================================================ */
+function updatePayment() {
+    let bookPrice = parseFloat(document.getElementById("bookPriceField").value) || 0;
+    let deposit = parseFloat(document.getElementById("depositField").value) || 0;
+    let shipping = parseFloat(document.getElementById("shipFeeField").value) || 0;
+    let total = deposit + shipping + bookPrice;
+
+    // DIGITAL: compute rental per day
+    let bookType = document.getElementById("bookTypeValue").value.toLowerCase();
+    if (bookType === "digital") {
+        let borrowDate = new Date(document.getElementById("BorrowDate").value);
+        let returnDate = new Date(document.getElementById("returnDate").value);
+
+        if (returnDate > borrowDate) {
+            let diffDays = Math.ceil((returnDate - borrowDate) / 86400000);
+            total = bookPrice + (diffDays * 20);
+        }
+    }
+
+    document.getElementById("totalPaymentField").value = total.toFixed(2);
+}
+
+/* ============================================================
+   PAGE LOAD — APPLY DIGITAL / PHYSICAL RULES
+============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+    const bookType = document.getElementById("bookTypeValue").value.toLowerCase();
+    const borrowType = document.getElementById("borrowType");
+
+    if (bookType === "digital") {
+        // Show return date section
+        document.getElementById("returnDateContainer").classList.remove("hidden");
+
+        // Force Softcopy
+        borrowType.value = "softcopy";
+        borrowType.disabled = true;
+
+        // No deposit & shipping
+        document.getElementById("depositField").value = 0;
+        document.getElementById("shipFeeField").value = 0;
+
+        // Remove cash option
+        const cashOption = document.querySelector('#paymentMode option[value="cash"]');
+        if (cashOption) cashOption.remove();
+    }
+    else {
+        // PHYSICAL DEFAULTS
+        document.getElementById("depositField").value = 500;
+        document.getElementById("shipFeeField").value = 100;
+    }
+
+    updatePayment();
+});
+
+/* ============================================================
+   BORROW TYPE LOGIC (SAME AS YOUR ORIGINAL)
+============================================================ */
+document.getElementById("borrowType").addEventListener("change", function () {
+    const bookType = document.getElementById("bookTypeValue").value.toLowerCase();
+    if (bookType === "digital") return; // digital is forced, skip
+
+    let type = this.value;
+    let depositField = document.getElementById("depositField");
+    let shippingField = document.getElementById("shipFeeField");
+
+    if (type === "ship") {
+        depositField.value = 500;
+        shippingField.value = 100;
+    }
+    else if (type === "walkin") {
+        depositField.value = 150;
+        shippingField.value = 0;
+    }
+    else {
+        depositField.value = "";
+        shippingField.value = "";
+    }
+
+    updatePayment();
+});
+
+/* ============================================================
+   RECALCULATE WHEN DATES CHANGE
+============================================================ */
+document.getElementById("BorrowDate").addEventListener("change", updatePayment);
+document.getElementById("returnDate")?.addEventListener("change", updatePayment);
+
+/* ============================================================
+   GCASH MODAL LOGIC
+============================================================ */
+const paymentMode = document.getElementById("paymentMode");
+const gcashModal = document.getElementById("gcashModal");
+const closeModal = document.getElementById("closeModal");
+const receiptInput = document.getElementById("receiptInput");
+const receiptPreview = document.getElementById("receiptPreview");
+const referenceNumber = document.getElementById("referenceNumber");
+const amountPaid = document.getElementById("amountPaid");
+const confirmPayment = document.getElementById("confirmPayment");
+
+// Open modal
+paymentMode.addEventListener("change", function() {
+    gcashModal.classList.toggle("hidden", this.value !== "gcash");
+});
+
+// Close modal
+closeModal.addEventListener("click", () => gcashModal.classList.add("hidden"));
+
+/* ============================================================
+   RECEIPT OCR — AUTO-READ REFERENCE #
+============================================================ */
+receiptInput.addEventListener("change", function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptPreview.src = e.target.result;
+        receiptPreview.classList.remove("hidden");
+
+        Tesseract.recognize(e.target.result, "eng")
+        .then(({ data: { text } }) => {
+            const match = text.match(/Ref\s*No\.?\s*(\d{4}\s\d{3}\s\d{6})/i);
+            referenceNumber.value = match ? match[1] : "";
+            if (!match) alert("Reference number not detected.");
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+/* ============================================================
+   CONFIRM PAYMENT
+============================================================ */
+confirmPayment.addEventListener("click", function(e) {
+    e.preventDefault();
+    const paid = parseFloat(amountPaid.value);
+    const total = parseFloat(document.getElementById("totalPaymentField").value);
+
+    if (paid !== total) {
+        alert("Amount paid does not match total payment!");
+        return;
+    }
+
+    let hiddenAmount = document.createElement("input");
+    hiddenAmount.type = "hidden";
+    hiddenAmount.name = "amountPaid";
+    hiddenAmount.value = paid;
+
+    document.querySelector("form").appendChild(hiddenAmount);
+    document.querySelector("form").submit();
+});
+</script>
+
