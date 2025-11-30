@@ -25,6 +25,7 @@
                 <th class="px-6 py-3">Genre</th>
                 <th class="px-6 py-3">Status</th>
                 <th class="px-6 py-3">Price</th>
+                <th class="px-6 py-3">Stocks</th>
                 <th class="px-6 py-3 text-center">Actions</th>
             </tr>
         </thead>
@@ -43,6 +44,7 @@
                         </span>
                     </td>
                     <td class="px-6 py-3">₱@book.Price.ToString("F2")</td>
+                    <td class="px-6 py-3">@book.Stocks</td>
                     <td class="px-6 py-3 flex justify-center space-x-2">
                         <!-- Edit -->
                         <a class="flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition duration-200 shadow-sm"

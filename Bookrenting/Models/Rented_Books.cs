@@ -45,13 +45,12 @@ namespace BookRenting.Models
         [Column("author")]
         public string Author { get; set; } = string.Empty;
 
-        [Required]
-        [Column("borrow_date")]
-        public DateTime BorrowDate { get; set; } = DateTime.Now;
+       [Required] 
+       [Column("borrow_date")] 
+       public DateTime BorrowDate { get; set; } = DateTime.Now;
 
-        [Required]
         [Column("return_date")]
-        public DateTime ReturnDate { get; set; } = DateTime.Now;
+public DateTime? ReturnDate { get; set; } = DateTime.Now;
 
         [Required]
         [Column("book_price")]
@@ -76,6 +75,10 @@ namespace BookRenting.Models
         [Required]
         [Column("payment_mode")]
         public string PaymentMode { get; set; } = string.Empty;
+
+        [Required]
+        [Column("amount_paid")]
+        public decimal AmountPaid { get; set; }      
 
         [Required]
         [Column("status")]

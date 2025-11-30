@@ -28,7 +28,7 @@
                 <img
                     src="@(book.ImagePath ?? "/images/default-book.png")"
                     alt="@book.Title"
-                    class="w-full h-48 object-cover"
+                    class="w-full h-48 object-center object-fill"
                 />
             }
 
@@ -42,11 +42,11 @@
                     <strong>Status:</strong>
                     @if (!string.IsNullOrEmpty(book.FilePath))
                     {
-                        <span class="text-green-600 font-semibold">Digital</span>
+                        <span class="text-green-600 font-semibold">Available Digital</span>
                     }
                     else
                     {
-                        <span class="text-blue-600 font-semibold">Physical</span>
+                        <span class="text-blue-600 font-semibold">Available Physical</span>
                     }
                 </p>
 

@@ -34,6 +34,10 @@ namespace BookRenting.Models
         [Column("price")]
         public decimal Price { get; set; }
 
+        [Column("stocks")]
+        [Display(Name = "Stocks")]
+        public int? Stocks { get; set; }
+
         [Column("image_path")]
         public string? ImagePath { get; set; }
 

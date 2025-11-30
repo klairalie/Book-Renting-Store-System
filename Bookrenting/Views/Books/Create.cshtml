@@ -22,7 +22,7 @@
             </select>
         </div>
 
-        <!-- Reference Number (hidden if digital) -->
+        <!-- Reference Number -->
         <div id="referenceDiv">
             <label class="block font-semibold mb-1">Reference Number</label>
             <input asp-for="ReferenceNumber" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Reference Number"/>
@@ -58,6 +58,14 @@
                 <label class="block font-semibold mb-1">Price</label>
                 <input asp-for="Price" type="number" step="0.01" class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]" placeholder="Price"/>
             </div>
+        </div>
+
+        <!-- Stocks (Always Visible) -->
+        <div id="stocksDiv">
+            <label class="block font-semibold mb-1">Stocks</label>
+            <input asp-for="Stocks" type="number" min="0"
+                   class="w-full p-2 border rounded focus:ring-[#a47148] focus:border-[#a47148]"
+                   placeholder="Number of copies available" />
         </div>
 
         <!-- Digital Book File -->
@@ -100,14 +108,16 @@
 
     function toggleFields() {
         if (statusSelect.value === 'Available Digital') {
-            referenceDiv.style.display = 'none';   // hide Reference Number
-            imageDiv.style.display = 'none';       // hide Image
-            fileDiv.style.display = 'block';       // show File upload
-        } else if (statusSelect.value === 'Available Physical') {
-            referenceDiv.style.display = 'block';  // show Reference Number
-            imageDiv.style.display = 'block';      // show Image
-            fileDiv.style.display = 'none';        // hide File upload
-        } else {
+            referenceDiv.style.display = 'none';
+            imageDiv.style.display = 'none';
+            fileDiv.style.display = 'block';
+        }
+        else if (statusSelect.value === 'Available Physical') {
+            referenceDiv.style.display = 'block';
+            imageDiv.style.display = 'block';
+            fileDiv.style.display = 'none';
+        }
+        else {
             referenceDiv.style.display = 'none';
             imageDiv.style.display = 'none';
             fileDiv.style.display = 'none';
@@ -115,8 +125,8 @@
     }
 
     statusSelect.addEventListener('change', toggleFields);
-    toggleFields(); // Run once on load
+    toggleFields(); // run once on load
 
-    lucide.createIcons(); // activate icons
+    lucide.createIcons();
 </script>
 }
