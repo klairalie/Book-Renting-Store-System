@@ -83,5 +83,7 @@ public DateTime? ReturnDate { get; set; } = DateTime.Now;
         [Required]
         [Column("status")]
         public string Status { get; set; } = "Pending";
+
+        
     }
 }

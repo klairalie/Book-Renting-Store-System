@@ -1,0 +1,167 @@
+@model IEnumerable<BookRenting.Models.RentedBook>
+@{
+    ViewData["Title"] = "Approve Rents";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2 class="text-2xl font-bold mb-4">Pending Rentals</h2>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed top-5 right-5 space-y-2 z-50"></div>
+
+<div class="overflow-x-auto bg-white rounded-lg shadow">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Book Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount Paid</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Total</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            @foreach (var rent in Model)
+            {
+                <tr id="rent-row-@rent.RentId">
+                    <td class="px-6 py-4 whitespace-nowrap">@rent.FullName</td>
+                    <td class="px-6 py-4 whitespace-nowrap">@rent.BookTitle</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span id="status-badge-@rent.RentId" class="px-2 inline-flex text-xs font-semibold rounded-full 
+                                     @(rent.Status == "Pending" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800")">
+                            @rent.Status
+                        </span>
+                    </td>
+                   @using System.Globalization
+
+<td class="px-6 py-4 whitespace-nowrap">
+    @rent.AmountPaid.ToString("C", CultureInfo.GetCultureInfo("en-PH"))
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+    @rent.PaymentTotal.ToString("C", CultureInfo.GetCultureInfo("en-PH"))
+</td>
+
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="openModal(@rent.RentId)" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Modal -->
+                <div id="modal-@rent.RentId" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                    <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-2/3 lg:w-1/2">
+                        <div class="flex justify-between items-center border-b p-4">
+                            <h3 class="text-2xl ml-5 font-bold"> @rent.FullName</h3>
+                            <button onclick="closeModal(@rent.RentId)" class="text-gray-600 hover:text-gray-900 text-2xl">&times;</button>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            
+                            <p><strong>Book Title:</strong> @rent.BookTitle</p>
+                            <p><strong>Status:</strong> <span id="modal-status-@rent.RentId">@rent.Status</span></p>
+                            <p><strong>Borrow Date:</strong> @rent.BorrowDate.ToString("yyyy-MM-dd")</p>
+                            <p><strong>Return Date:</strong> @(rent.ReturnDate.HasValue ? rent.ReturnDate.Value.ToString("yyyy-MM-dd") : "-")</p>
+                            <p><strong>Payment Total:</strong> @rent.PaymentTotal.ToString("C", CultureInfo.GetCultureInfo("en-PH"))</p>
+                            <p><strong>Amount Paid:</strong> @rent.AmountPaid.ToString("C", CultureInfo.GetCultureInfo("en-PH"))</p>
+                            <p><strong>Deposit:</strong> @rent.Deposit.ToString("C", CultureInfo.GetCultureInfo("en-PH"))</p>
+                            <p><strong>Shipping Fee:</strong> @rent.ShippingFee.ToString("C", CultureInfo.GetCultureInfo("en-PH"))</p>
+                            <p><strong>Borrow Type:</strong> @rent.BorrowType</p>
+                            <p><strong>Mode of Payment:</strong> @rent.PaymentMode</p>
+                            <p><strong>Reference Number:</strong> @rent.ReferenceNumber ?? "-"</p>
+                            <p><strong>Receipt:</strong>
+                                @if (!string.IsNullOrEmpty(rent.ReceiptPath))
+                                {
+                                    <a href="@rent.ReceiptPath" target="_blank" class="text-blue-600 underline">View</a>
+                                }
+                                else { <span>-</span> }
+                            </p>
+                        </div>
+                        <div class="flex justify-end border-t p-4 space-x-2">
+                            <select id="mark-status-@rent.RentId" class="border rounded px-2 py-1">
+                                <option value="Approved">Approve</option>
+                                <option value="Decline">Decline</option>
+                                <option value="Late Return">Late Return</option>
+                                <option value="Returned">Returned</option>
+                                <option value="Lost">Lost</option>
+                            
+                            </select>
+                            <button onclick="markRent(@rent.RentId)" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition ml-2">Mark</button>
+                            <button onclick="closeModal(@rent.RentId)" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition">Close</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        function openModal(id) {
+            document.getElementById('modal-' + id).classList.remove('hidden');
+            document.getElementById('modal-' + id).classList.add('flex');
+        }
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.add('hidden');
+            document.getElementById('modal-' + id).classList.remove('flex');
+        }
+
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-green-100 text-green-800',
+                error: 'bg-red-100 text-red-800',
+                info: 'bg-blue-100 text-blue-800'
+            };
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-2 rounded shadow ${colors[type]} animate-slide-in`;
+            toast.innerText = message;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition', 'duration-500');
+                setTimeout(() => toast.remove(), 500);
+            }, 2000);
+        }
+
+        async function markRent(id) {
+            const status = document.getElementById('mark-status-' + id).value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            const response = await fetch('@Url.Action("MarkRentAjax", "Admin")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ rentId: id, status: status })
+            });
+
+            if (response.ok) {
+                document.getElementById('status-badge-' + id).innerText = status;
+                document.getElementById('modal-status-' + id).innerText = status;
+
+                const badge = document.getElementById('status-badge-' + id);
+                badge.className = "px-2 inline-flex text-xs font-semibold rounded-full ";
+                if (status === "Pending") badge.classList.add("bg-yellow-100", "text-yellow-800");
+                else if (status === "Approved") badge.classList.add("bg-green-100", "text-green-800");
+                else if (status === "Decline") badge.classList.add("bg-red-100", "text-red-800");
+                else if (status === "Late Return") badge.classList.add("bg-orange-100", "text-orange-800");
+                else if (status === "Returned") badge.classList.add("bg-blue-100", "text-blue-800");
+                else if (status === "Lost") badge.classList.add("bg-gray-100", "text-gray-800");
+
+                showToast(`Rental has been marked as "${status}"`, 'success');
+            } else {
+                showToast('Failed to update status.', 'error');
+            }
+        }
+    </script>
+    <style>
+        @@keyframes slide-in {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in { animation: slide-in 0.3s ease-out; }
+    </style>
+}

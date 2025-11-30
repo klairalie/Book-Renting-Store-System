@@ -190,13 +190,24 @@ public async Task<IActionResult> Edit(int id, Book book, IFormFile? bookFile, IF
             return RedirectToAction(nameof(Index));
         }
 
-       // GET: Books/BrowseCatalog
 // GET: Books/BrowseCatalog
 public async Task<IActionResult> BrowseCatalog()
 {
+    var userEmail = User.Identity?.Name; // Assuming email is used as login
     var books = await _context.Books.ToListAsync();
+
+    // Get rentals of the logged-in user that are not returned
+    var rentedBookTitles = await _context.RentedBooks
+        .Where(r => r.Email == userEmail && r.Status != "Returned")
+        .Select(r => r.BookTitle)
+        .ToListAsync();
+
+    // Pass both to the view via a ViewBag
+    ViewBag.RentedBookTitles = rentedBookTitles ?? new List<string>();
+
     return View("~/Views/RentingStore/BrowseCatalog.cshtml", books);
 }
+
 
 
     }

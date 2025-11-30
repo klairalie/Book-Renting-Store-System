@@ -124,40 +124,52 @@ namespace BookRenting.Controllers
         [HttpGet]
         public IActionResult Login() => View();
 
-        [HttpPost]
+   // ---------------- POST Login ----------------
+[HttpPost]
 [ValidateAntiForgeryToken]
 public async Task<IActionResult> Login(string email, string password)
 {
-    // 1. Check normal registered users first
+    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    {
+        ModelState.AddModelError(string.Empty, "Email and password are required.");
+        return View();
+    }
+
+    // 1️⃣ Check normal registered users first
     var loginUser = await _context.RegisterUsers.FirstOrDefaultAsync(u => u.Email == email);
 
     if (loginUser != null)
     {
-        if (!string.IsNullOrEmpty(loginUser.Password))
-        {
-            var result = _passwordHasher.VerifyHashedPassword(loginUser, loginUser.Password, password);
-            if (result == PasswordVerificationResult.Failed)
-            {
-                ModelState.AddModelError(string.Empty, "Invalid credentials.");
-                return View();
-            }
-        }
-        else
+        if (string.IsNullOrEmpty(loginUser.Password))
         {
             ModelState.AddModelError(string.Empty, "This account uses Google login. Please sign in with Google.");
             return View();
         }
 
+        var result = _passwordHasher.VerifyHashedPassword(loginUser, loginUser.Password, password);
+        if (result == PasswordVerificationResult.Failed)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid credentials.");
+            return View();
+        }
+
+        // Sign in as normal user
         await SignInUser(loginUser.Email, "User");
         return RedirectToAction("Dashboard", "RentingStore");
     }
 
-    // 2. Check Admins table if not found in RegisterUsers
+    // 2️⃣ Check Admins table
     var adminUser = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
     if (adminUser != null)
     {
+        if (string.IsNullOrEmpty(adminUser.Password))
+        {
+            ModelState.AddModelError(string.Empty, "Admin password is not set. Contact developer.");
+            return View();
+        }
+
         var adminHasher = new PasswordHasher<Admin>();
-var result = adminHasher.VerifyHashedPassword(adminUser, adminUser.Password, password);
+        var result = adminHasher.VerifyHashedPassword(adminUser, adminUser.Password, password);
 
         if (result == PasswordVerificationResult.Failed)
         {
@@ -165,30 +177,16 @@ var result = adminHasher.VerifyHashedPassword(adminUser, adminUser.Password, pas
             return View();
         }
 
-        // Sign in as admin using fully qualified ClaimTypes
-        var claimsIdentity = new System.Security.Claims.ClaimsIdentity(
-            new[]
-            {
-                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, adminUser.UserName),
-
-                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin")
-            },
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme, 
-            new System.Security.Claims.ClaimsPrincipal(claimsIdentity)
-        );
-
-       return RedirectToAction("AdminDashboard", "Admin");
- // redirect to Admin dashboard
+        // Sign in as admin
+        await SignInUser(adminUser.Email, "Admin");
+        return RedirectToAction("AdminDashboard", "Admin");
     }
 
-    // 3. Not found in either table
+    // 3️⃣ Not found in either table
     ModelState.AddModelError(string.Empty, "Invalid credentials.");
     return View();
 }
+
 
 // ---------------- Helper: SignInUser ----------------
 private async Task SignInUser(string email, string role)

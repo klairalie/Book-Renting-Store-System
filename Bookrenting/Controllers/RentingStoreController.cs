@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookRenting.Controllers
 {
@@ -54,94 +55,136 @@ namespace BookRenting.Controllers
             return View(rent);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RentBookSubmit(RentedBook model, IFormFile? ReceiptFile)
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> RentBookSubmit(RentedBook model, IFormFile? ReceiptFile)
+{
+   // DIGITAL validation
+if (string.Equals(model.BookType, "digital", StringComparison.OrdinalIgnoreCase))
+{
+    if (model.ReturnDate == null || model.ReturnDate <= model.BorrowDate)
+    {
+        ModelState.AddModelError(nameof(model.ReturnDate), "Return date must be after borrow date for digital books.");
+    }
+}
+
+// PHYSICAL book cannot be softcopy
+if (string.Equals(model.BookType, "physical", StringComparison.OrdinalIgnoreCase) &&
+    string.Equals(model.BorrowType, "softcopy", StringComparison.OrdinalIgnoreCase))
+{
+    ModelState.AddModelError(nameof(model.BorrowType), "Physical books is not allowed for softcopy.");
+}
+
+if (!ModelState.IsValid)
+{
+    return BadRequest(new {
+        success = false,
+        message = "Please check your form inputs.",
+        errors = ModelState.SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) 
+                  ?? Enumerable.Empty<string>()).ToArray()
+    });
+}
+
+
+    try
+    {
+        string? receiptPath = null;
+
+        // GCASH RECEIPT UPLOAD
+        if (string.Equals(model.PaymentMode, "gcash", StringComparison.OrdinalIgnoreCase) && ReceiptFile != null)
         {
-            // Server-side: ensure required fields for digital
-            if (string.Equals(model.BookType, "digital", StringComparison.OrdinalIgnoreCase))
+            string uploadsFolder = Path.Combine(_env.WebRootPath ?? ".", "uploads", "receipts");
+
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            string fileName = $"gcash_{Guid.NewGuid()}{Path.GetExtension(ReceiptFile.FileName)}";
+            string filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                // For digital, make sure ReturnDate is present and valid
-                if (model.ReturnDate == null || model.ReturnDate <= model.BorrowDate)
-                {
-                    ModelState.AddModelError(nameof(model.ReturnDate), "Return date must be after borrow date for digital books.");
-                }
+                await ReceiptFile.CopyToAsync(fileStream);
             }
 
-            if (!ModelState.IsValid)
+            receiptPath = $"/uploads/receipts/{fileName}";
+        }
+
+        // STOCK CHECK FOR PHYSICAL
+        if (string.Equals(model.BookType, "physical", StringComparison.OrdinalIgnoreCase))
+        {
+            var book = await _context.Books
+                .Where(b => b.Title == model.BookTitle)
+                .FirstOrDefaultAsync();
+
+            if (book == null)
             {
-                // Return BadRequest so that front-end can detect and show error
-                return BadRequest(new { success = false, message = "Please check your form inputs.", errors = ModelState.SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? Enumerable.Empty<string>()).ToArray() });
+                return BadRequest(new { success = false, message = "Book not found in the catalog." });
             }
 
-            try
+            if (book.Stocks <= 0)
             {
-                string? receiptPath = null;
-
-                // Upload receipt only for GCash
-                if (string.Equals(model.PaymentMode, "gcash", StringComparison.OrdinalIgnoreCase) && ReceiptFile != null)
-                {
-                    string uploadsFolder = Path.Combine(_env.WebRootPath ?? ".", "uploads", "receipts");
-
-                    if (!Directory.Exists(uploadsFolder))
-                        Directory.CreateDirectory(uploadsFolder);
-
-                    string fileName = $"gcash_{Guid.NewGuid()}{Path.GetExtension(ReceiptFile.FileName)}";
-                    string filePath = Path.Combine(uploadsFolder, fileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await ReceiptFile.CopyToAsync(fileStream);
-                    }
-
-                    receiptPath = $"/uploads/receipts/{fileName}";
-                }
-
-                // Ensure numeric properties have sensible defaults (avoid nulls causing db issues)
-                model.Deposit = model.Deposit;
-                model.ShippingFee = model.ShippingFee;
-                model.PaymentTotal = model.PaymentTotal;
-                model.AmountPaid = model.AmountPaid;
-
-                var rented = new RentedBook
-                {
-                    FullName = model.FullName,
-                    Email = model.Email,
-                    ContactNumber = model.ContactNumber,
-                    Address = model.Address,
-                    BookTitle = model.BookTitle,
-                    Author = model.Author,
-                    BookType = model.BookType,
-                    BookPrice = model.BookPrice,
-                    BorrowDate = model.BorrowDate,
-                    ReturnDate = model.ReturnDate,
-                    BorrowType = model.BorrowType,
-                    Deposit = model.Deposit,
-                    ShippingFee = model.ShippingFee,
-                    PaymentTotal = model.PaymentTotal,
-                    PaymentMode = model.PaymentMode,
-                    ReferenceNumber = model.ReferenceNumber,
-                    AmountPaid = model.AmountPaid,
-                    ReceiptPath = receiptPath,
-                    Status = "Pending",
-                };
-
-                _context.RentedBooks.Add(rented);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { success = true, message = "Rent request submitted successfully!" });
+                return BadRequest(new { success = false, message = "This book is out of stock." });
             }
-            catch (Exception)
+
+            book.Stocks -= 1;
+
+            if (book.Stocks == 0)
             {
-                // log ex as needed
-                return StatusCode(500, new { success = false, message = "An error occurred while processing your request." });
+                book.Status = "Unavailable";
             }
         }
+
+        var rented = new RentedBook
+        {
+            FullName = model.FullName,
+            Email = model.Email,
+            ContactNumber = model.ContactNumber,
+            Address = model.Address,
+            BookTitle = model.BookTitle,
+            Author = model.Author,
+            BookType = model.BookType,
+            BookPrice = model.BookPrice,
+            BorrowDate = model.BorrowDate,
+            ReturnDate = model.ReturnDate,
+            BorrowType = model.BorrowType,
+            Deposit = model.Deposit,
+            ShippingFee = model.ShippingFee,
+            PaymentTotal = model.PaymentTotal,
+            PaymentMode = model.PaymentMode,
+            ReferenceNumber = model.ReferenceNumber,
+            AmountPaid = model.AmountPaid,
+            ReceiptPath = receiptPath,
+            Status = "Pending",
+        };
+
+        _context.RentedBooks.Add(rented);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Rent request submitted successfully!" });
+    }
+    catch (Exception)
+    {
+        return StatusCode(500, new { success = false, message = "An error occurred while processing your request." });
+    }
+}
 
         [HttpGet]
         public IActionResult ThankYou()
         {
             return View();
         }
+
+        public IActionResult MyBooks()
+{
+    var email = User?.Identity?.Name; // Or however you track user email
+    var approvedBooks = _context.RentedBooks
+                                .Where(b => b.Email == email && b.Status == "Approved")
+                                .OrderByDescending(b => b.BorrowDate)
+                                .ToList();
+    return View("MyBooks", approvedBooks);
+}
+
     }
 }
