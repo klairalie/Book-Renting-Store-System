@@ -115,6 +115,8 @@ public async Task<IActionResult> Edit(int id, Book book, IFormFile? bookFile, IF
     existingBook.Genre = book.Genre;
     existingBook.Status = book.Status;
     existingBook.Price = book.Price;
+    existingBook.Stocks = book.Stocks;
+    
 
     if (!string.IsNullOrEmpty(book.Synopsis))
         existingBook.Synopsis = book.Synopsis;

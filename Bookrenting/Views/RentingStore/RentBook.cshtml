@@ -150,7 +150,7 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium">Amount Paid</label>
-                <input type="number" step="0.01" id="amountPaid" class="w-full border rounded p-2.5"/>
+                <input type="number" step="0.01" id="amountPaid" class="w-full border rounded p-2.5" readonly/>
             </div>
 
             <button id="confirmPayment" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full">
@@ -439,21 +439,42 @@ document.getElementById("rentForm").addEventListener("submit", async function (e
     document.getElementById("hiddenReturnDate").value = document.getElementById("returnDate")?.value || "";
     document.getElementById("hiddenPaymentTotal").value = document.getElementById("totalPaymentField").value;
     document.getElementById("hiddenReferenceNumber").value = document.getElementById("referenceNumber").value;
-    document.getElementById("hiddenAmountPaid").value = parseFloat(document.getElementById("amountPaid").value) || 0;
+    
+    const amountPaidVal = parseFloat(document.getElementById("amountPaid").value) || 0;
+    const totalPaymentVal = parseFloat(document.getElementById("totalPaymentField").value) || 0;
+    document.getElementById("hiddenAmountPaid").value = amountPaidVal;
+
     document.getElementById("hiddenBorrowType").value = document.getElementById("borrowType").value;
 
-    if (paymentMode.value === "gcash") {
-        if (!referenceNumber.value || !amountPaid.value) {
+    const paymentModeVal = document.getElementById("paymentMode").value;
+
+    // ⚠️ VALIDATE PAYMENT ONLY FOR GCash
+    if (paymentModeVal === "gcash") {
+        if (amountPaidVal !== totalPaymentVal) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Payment Mismatch',
+                text: 'The amount paid does not match the total payment. Please check your GCash payment before submitting.',
+                confirmButtonColor: '#3085d6',
+            });
+            return; // stop submission
+        }
+
+        if (!document.getElementById("referenceNumber").value) {
             Swal.fire({
                 icon: 'error',
                 title: 'Incomplete Payment Details',
-                text: 'Please complete the GCash payment details before submitting.',
+                text: 'Please provide the GCash reference number before submitting.',
                 confirmButtonColor: '#3085d6',
             });
-            return;
+            return; // stop submission
         }
+    } else {
+        // Cash payments can leave AmountPaid as 0
+        document.getElementById("hiddenAmountPaid").value = 0;
     }
 
+    // Proceed with submission
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
@@ -489,14 +510,6 @@ document.getElementById("rentForm").addEventListener("submit", async function (e
                     form.reset();
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit Rent Request';
-                    const bookType = document.getElementById("bookTypeValue").value.toLowerCase();
-                    if (bookType === "digital") {
-                        document.getElementById("depositField").value = 0;
-                        document.getElementById("shipFeeField").value = 0;
-                    } else {
-                        document.getElementById("depositField").value = 500;
-                        document.getElementById("shipFeeField").value = 100;
-                    }
                     updatePayment();
                 }
             });
@@ -515,4 +528,5 @@ document.getElementById("rentForm").addEventListener("submit", async function (e
         submitBtn.textContent = 'Submit Rent Request';
     }
 });
+
 </script>

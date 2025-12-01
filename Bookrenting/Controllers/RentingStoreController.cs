@@ -238,5 +238,50 @@ var model = new RentedBook
     return View("ReadNow", model);
 }
 
+
+
+ [HttpGet]
+        public async Task<IActionResult> ReturnBook(int rentId)
+        {
+            var rentedBook = await _context.RentedBooks.FirstOrDefaultAsync(rb => rb.RentId == rentId);
+            if (rentedBook == null) return NotFound();
+
+            return View("ReturnBook", rentedBook);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ReturnBook(int rentId, string returnType, string paymentMode)
+        {
+            var rentedBook = await _context.RentedBooks.FirstOrDefaultAsync(rb => rb.RentId == rentId);
+            if (rentedBook == null) return NotFound();
+
+            decimal additionalFee = 0m;
+
+            // Shipping fee if return type is ship
+            if (returnType.ToLower() == "ship")
+            {
+                additionalFee += 50m;
+                paymentMode = "Gcash"; // enforce Gcash only
+            }
+
+            // Add late fee if exists
+            if (rentedBook.LateFee > 0)
+            {
+                additionalFee += rentedBook.LateFee;
+            }
+
+            // Calculate payment total
+            rentedBook.PaymentTotal = additionalFee;
+            rentedBook.PaymentMode = paymentMode;
+            rentedBook.Status = "Returned";
+            rentedBook.ReturnDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Book return processed successfully!";
+            return RedirectToAction("MyBooks", "RentingStore");
+        }
+
+
     }
 }

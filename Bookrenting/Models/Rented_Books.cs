@@ -88,6 +88,6 @@ public DateTime? ReturnDate { get; set; } = DateTime.Now;
 
 [NotMapped] // This tells EF not to look for it in the database
     public string FilePath { get; set; } = string.Empty;
-
+        // public string PaymentStatus { get; internal set; } 
     }
     }           

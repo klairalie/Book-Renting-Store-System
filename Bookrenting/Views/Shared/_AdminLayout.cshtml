@@ -73,7 +73,7 @@
                 </a>
                 <a href="/Admin/ApprovedRents" 
                    class="flex items-center p-4 rounded hover:bg-[#3d3a35] transition">
-                    <i data-lucide="book" class="w-8 h-8"></i>
+                    <i data-lucide="hand-coins" class="w-8 h-8"></i>
                     <span class="label ml-3">Manage Rents</span>
                 </a>
                 <!-- Settings Dropdown -->
@@ -86,9 +86,9 @@
                     </button>
                     <div x-show="open" @@click.away="open = false" 
                          class="mt-2 space-y-2 bg-[#3a3732] rounded shadow-lg p-2 flex flex-col">
-                        <a href="/Admin/Profile" class="px-3 py-2 rounded hover:bg-[#4a4742] transition text-white">
+                        @* <a href="/Admin/Profile" class="px-3 py-2 rounded hover:bg-[#4a4742] transition text-white">
                             Profile & Password
-                        </a>
+                        </a> *@
                         <a href="/Admin/Reports" class="px-3 py-2 rounded hover:bg-[#4a4742] transition text-white">
                             Reports
                         </a>
@@ -105,7 +105,7 @@
             <!-- Main Header -->
             <header class="flex items-center h-16 px-6 bg-white shadow border-b justify-between py-16">
                 <h1 class="text-3xl font-semibold text-[#2d2a26]">
-                    Welcome, @User.Identity?.Name!
+                    Welcome, Admin @User.Identity?.Name!
                 </h1>
                 <a href="/Account/Login"
                    class="px-4 py-2 bg-[#a47148] text-white rounded hover:bg-[#8c5d38] transition">

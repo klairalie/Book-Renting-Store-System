@@ -53,9 +53,17 @@
     </div>
 
     <div>
-    <label class="block font-semibold">Synopsis</label>
-    <textarea asp-for="Synopsis" rows="4" class="w-full border px-2 py-1 rounded"></textarea>
-    <span asp-validation-for="Synopsis" class="text-red-600"></span>
+        <label class="block font-semibold">Synopsis</label>
+        <textarea asp-for="Synopsis" rows="4" class="w-full border px-2 py-1 rounded"></textarea>
+        <span asp-validation-for="Synopsis" class="text-red-600"></span>
+    </div>
+
+    <!-- Stocks -->
+
+<div>
+    <label class="block font-semibold">Stock</label>
+    <input asp-for="Stocks" type="number" min="0" class="w-full border px-2 py-1 rounded" />
+    <span asp-validation-for="Stocks" class="text-red-600"></span>
 </div>
 
 
@@ -104,7 +112,6 @@
         }
 
         statusSelect.addEventListener('change', toggleFields);
-        // Run on page load in case of validation errors
         toggleFields();
     </script>
 }

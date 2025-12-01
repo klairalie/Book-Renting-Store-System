@@ -7,58 +7,232 @@
     Layout = "~/Views/Shared/_UserLayout.cshtml";
 }
 
+<style>
+    body {
+        background: #fdf6f0;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #4b3832;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        letter-spacing: 1px;
+    }
+
+    .grid-container {
+        margin-top: 1.5rem;
+    }
+
+    .book-card {
+        background: linear-gradient(145deg, #fffdfb, #f7ece0);
+        border-radius: 1rem;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .book-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+    }
+
+    .book-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #4b3832;
+    }
+
+    .book-author {
+        font-size: 1rem;
+        color: #6b5b4c;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #a47148;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        color: white;
+        margin-right: 0.25rem;
+    }
+
+    .softcopy { background: #4b3832; }
+    .hardcopy { background: #a47148; }
+    .approved { background: #16a34a; }
+    .pending { background: #f59e0b; }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .read-btn, .receipt-btn, .return-btn {
+        padding: 0.55rem 1.2rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .read-btn {
+        background: linear-gradient(90deg, #4b3832, #3a2d26);
+        color: white;
+    }
+
+    .read-btn:hover {
+        background: linear-gradient(90deg, #3a2d26, #2e221b);
+        transform: scale(1.05);
+    }
+
+    .receipt-btn {
+        background: #f0e5d8;
+        color: #a47148;
+        border: 1px solid #a47148;
+    }
+
+    .receipt-btn:hover {
+        background: #e8d8c5;
+        transform: scale(1.05);
+    }
+
+    .return-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+    }
+
+    .return-btn:hover {
+        background: #dc2626;
+        transform: scale(1.05);
+    }
+
+    .time-up {
+        position: absolute;
+        top: 1rem;
+        right: -1rem;
+        background: #ef4444;
+        color: white;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transform: rotate(15deg);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    }
+
+    .late-warning {
+        background: #fee2e2;
+        color: #b91c1c;
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .info-block p {
+        margin: 0.25rem 0;
+    }
+</style>
+
+<h1 class="page-title">📚 My Books</h1>
+
 @if (!Model.Any())
 {
-    <p class="text-gray-600">You currently have no approved rentals.</p>
+    <p class="text-gray-600 text-center mt-10 text-lg">You currently have no approved rentals.</p>
 }
 else
 {
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 grid-container">
         @foreach (var rentedBook in Model)
         {
-            <div class="bg-white rounded-xl shadow-md border border-[#e8e5d9] p-4 relative overflow-hidden hover:shadow-lg transition duration-300">
+            <div class="book-card">
+
+                <!-- Time Up Ribbon for Softcopy -->
+                @if (rentedBook.BorrowType == "softcopy" && rentedBook.Status == "Approved" &&
+                     rentedBook.ReturnDate.HasValue && DateTime.Now.Date > rentedBook.ReturnDate.Value.Date)
+                {
+                    <div class="time-up">⏰ Time is up</div>
+                }
 
                 <!-- Book Info -->
                 <div class="mb-4">
-                    <h2 class="text-xl font-semibold text-[#4b3832]">@rentedBook.BookTitle</h2>
-                    <p class="text-gray-600">by @rentedBook.Author</p>
-                    <p class="text-sm text-gray-500 mt-1">Borrow Type: @rentedBook.BorrowType</p>
-                    <p class="text-sm text-gray-500">Status: <span class="font-medium">@rentedBook.Status</span></p>
+                    <h2 class="book-title">@rentedBook.BookTitle</h2>
+                    <p class="book-author">by @rentedBook.Author</p>
+
+                    <div class="mb-2">
+                        <span class="badge @(rentedBook.BorrowType == "softcopy" ? "softcopy" : "hardcopy")">@rentedBook.BorrowType</span>
+                        <span class="badge @(rentedBook.Status.ToLower() == "approved" ? "approved" : "pending")">@rentedBook.Status</span>
+                    </div>
                 </div>
 
                 <!-- Payment Info -->
-                <div class="mb-4 text-sm text-gray-600 space-y-1">
-                    <p>Deposit: <span class="font-medium text-[#4b3832]">₱@rentedBook.Deposit</span></p>
-                    <p>Shipping Fee: <span class="font-medium text-[#4b3832]">₱@rentedBook.ShippingFee</span></p>
-                    <p>Total Paid: <span class="font-semibold text-[#a47148]">₱@rentedBook.AmountPaid</span></p>
+                <div class="mb-4 text-sm text-gray-700 info-block">
+                    <p>Deposit: <span class="info-label">₱@rentedBook.Deposit</span></p>
+                    <p>Shipping Fee: <span class="info-label">₱@rentedBook.ShippingFee</span></p>
+                    <p>Total Paid: <span class="info-label">₱@rentedBook.AmountPaid</span></p>
                 </div>
 
                 <!-- Borrow Dates -->
-                <div class="mb-4 text-sm text-gray-500 space-y-1">
-                    <p>Borrowed: <span class="font-medium">@rentedBook.BorrowDate.ToString("MMM dd, yyyy")</span></p>
-                    <p>Return Due: <span class="font-medium">@rentedBook.ReturnDate?.ToString("MMM dd, yyyy")</span></p>
+                <div class="mb-4 text-sm text-gray-600 info-block">
+                    <p>Borrowed: <span class="info-label">@rentedBook.BorrowDate.ToString("MMM dd, yyyy")</span></p>
+                    <p>Return Due: <span class="info-label">@rentedBook.ReturnDate?.ToString("MMM dd, yyyy")</span></p>
                 </div>
 
-                <!-- Read Now Button for Digital Books -->
-                @if (rentedBook.BorrowType == "softcopy" && rentedBook.Status == "Approved")
-                {
-                    var book = await _context.Books
-                        .FirstOrDefaultAsync(b => b.Title == rentedBook.BookTitle);
-
-                    if (book != null && !string.IsNullOrEmpty(book.FilePath))
+                <!-- Action Buttons -->
+                <div class="actions">
+                    @* Softcopy: Read Now *@
+                    @if (rentedBook.BorrowType == "softcopy" && rentedBook.Status == "Approved")
                     {
-                        <a href="@Url.Action("ReadNow", "RentingStore", new { rentId = rentedBook.RentId })"
-                           class="mt-3 inline-block bg-[#4b3832] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#3a2d26] transition">
-                            📖 Read Now
-                        </a>
-                    }
-                }
+                        var book = await _context.Books
+                            .FirstOrDefaultAsync(b => b.Title == rentedBook.BookTitle);
 
-                <!-- Receipt Link -->
-                @if (!string.IsNullOrEmpty(rentedBook.ReceiptPath))
-                {
-                    <a href="@rentedBook.ReceiptPath" target="_blank" class="block mt-3 text-sm text-[#a47148] hover:underline">View Receipt</a>
-                }
+                        if (book != null && !string.IsNullOrEmpty(book.FilePath) &&
+                            (!rentedBook.ReturnDate.HasValue || DateTime.Now.Date <= rentedBook.ReturnDate.Value.Date))
+                        {
+                            <a href="@Url.Action("ReadNow", "RentingStore", new { rentId = rentedBook.RentId })" class="read-btn">
+                                📖 Read Now
+                            </a>
+                        }
+                    }
+
+                  @* Physical book: Return Book if overdue *@
+@if (rentedBook.BookType.ToLower() == "physical" && rentedBook.Status.ToLower() == "approved" &&
+    (!rentedBook.ReturnDate.HasValue || DateTime.Now.Date > rentedBook.ReturnDate.Value.Date))
+{
+    <span class="late-warning">⚠️ Please return the book or late fees will be charged automatically.</span>
+    <a href="/RentingStore/ReturnBook?rentId=@rentedBook.RentId" class="return-btn">
+        📦 Return Book
+    </a>
+}
+
+
+                    @* Receipt Link *@
+                    @if (!string.IsNullOrEmpty(rentedBook.ReceiptPath))
+                    {
+                        <a href="@rentedBook.ReceiptPath" target="_blank" class="receipt-btn">🧾 View Receipt</a>
+                    }
+                </div>
+
             </div>
         }
     </div>

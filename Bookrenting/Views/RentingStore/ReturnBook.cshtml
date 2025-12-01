@@ -1,0 +1,185 @@
+@model BookRenting.Models.RentedBook
+
+@{
+    ViewData["Title"] = "Return Book";
+    Layout = "~/Views/Shared/_UserLayout.cshtml";
+}
+
+<style>
+    body { background: #fdf6f0; font-family: 'Inter', sans-serif; }
+    .container { max-width: 600px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+    .page-title { text-align: center; font-size: 1.75rem; font-weight: 700; color: #4b3832; margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { font-weight: 600; display: block; margin-bottom: 0.5rem; }
+    select, input { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ccc; font-size: 1rem; }
+    .submit-btn { background: #4b3832; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+    .submit-btn:hover { background: #3a2d26; }
+    .info { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .warning { background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; color: #b91c1c; font-weight: 600; margin-bottom: 1rem; }
+</style>
+
+<div class="container">
+    <h1 class="page-title">📦 Return Book</h1>
+
+    <div class="info">
+        <p><strong>Book:</strong> @Model.BookTitle</p>
+        <p><strong>Borrowed:</strong> @Model.BorrowDate.ToString("MMM dd, yyyy")</p>
+        <p><strong>Return Due:</strong> @Model.ReturnDate?.ToString("MMM dd, yyyy")</p>
+        <p><strong>Late Fee:</strong> ₱@Model.LateFee</p>
+    </div>
+
+    @if (Model.BookType.ToLower() == "hardcopy" && Model.ReturnDate.HasValue && DateTime.Now.Date > Model.ReturnDate.Value.Date)
+    {
+        <div class="warning">⚠️ This book is overdue! Late fees will apply.</div>
+    }
+
+    <form asp-action="ReturnBook" method="post" enctype="multipart/form-data" id="returnForm">
+        <input type="hidden" name="rentId" value="@Model.RentId" />
+        <input type="hidden" id="hiddenLateFee" name="LateFee" value="@Model.LateFee" />
+        <input type="hidden" id="hiddenPaymentTotal" name="PaymentTotal" value="@Model.LateFee" />
+        <input type="hidden" id="hiddenAmountPaid" name="AmountPaid" value="0" />
+        <input type="hidden" id="hiddenReferenceNumber" name="ReferenceNumber" value="" />
+
+        <div class="form-group">
+            <label>Return Type</label>
+            <select name="returnType" id="returnType" onchange="updatePaymentDropdown()">
+                <option value="Walk-in">Walk-in</option>
+                <option value="Ship">Ship</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Payment Mode</label>
+            <select name="paymentMode" id="paymentMode">
+                <option value="Gcash">Gcash</option>
+                <option value="Cash">Cash</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Total Payment (₱)</label>
+            <input type="text" id="totalPaymentField" value="@Model.LateFee" readonly />
+        </div>
+
+        <!-- GCash Modal -->
+        <div id="gcashModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-5 rounded shadow-md w-96 relative">
+                <button type="button" id="closeModal" class="absolute top-2 right-2 text-gray-500">&times;</button>
+                <h3 class="text-lg font-semibold mb-2">GCash Payment</h3>
+                <div class="mb-4 text-center">
+                    <img src="/images/gcash-qr.png" alt="GCash QR Code" class="mx-auto w-48 h-48"/>
+                </div>
+                <div class="mb-4">
+                    <label>Upload Receipt</label>
+                    <input type="file" id="receiptInput" accept="image/*" class="w-full"/>
+                    <img id="receiptPreview" class="mt-2 w-full h-40 object-contain hidden"/>
+                </div>
+                <div class="mb-4">
+                    <label>Reference Number</label>
+                    <input type="text" id="referenceNumber" class="w-full border rounded p-2.5" readonly/>
+                </div>
+                <div class="mb-4">
+                    <label>Amount Paid</label>
+                    <input type="number" step="0.01" id="amountPaid" class="w-full border rounded p-2.5" readonly/>
+                </div>
+                <button type="button" id="confirmPayment" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full">
+                    Complete Payment
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Return Book</button>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+
+<script>
+const returnType = document.getElementById('returnType');
+const paymentMode = document.getElementById('paymentMode');
+const totalPaymentField = document.getElementById('totalPaymentField');
+const hiddenPaymentTotal = document.getElementById('hiddenPaymentTotal');
+const hiddenLateFee = parseFloat(document.getElementById('hiddenLateFee').value);
+
+function updatePaymentDropdown() {
+    let type = returnType.value;
+
+    let basePayment = hiddenLateFee;
+    if (type === "Ship") basePayment += 50; // shipping fee
+
+    totalPaymentField.value = '₱' + basePayment;
+    hiddenPaymentTotal.value = basePayment;
+
+    // Logic: enable dropdown if ship OR late fee > 0
+    if (type === "Ship" || hiddenLateFee > 0) {
+        paymentMode.disabled = false;
+        paymentMode.value = "Gcash";
+    } else {
+        paymentMode.disabled = true;
+        paymentMode.value = "Cash"; // default
+    }
+}
+updatePaymentDropdown();
+
+// GCash Modal & OCR
+const gcashModal = document.getElementById("gcashModal");
+const closeModal = document.getElementById("closeModal");
+const receiptInput = document.getElementById("receiptInput");
+const receiptPreview = document.getElementById("receiptPreview");
+const referenceNumber = document.getElementById("referenceNumber");
+const amountPaid = document.getElementById("amountPaid");
+const confirmPayment = document.getElementById("confirmPayment");
+
+paymentMode.addEventListener("change", function() {
+    if(this.value === "Gcash") gcashModal.classList.remove("hidden");
+    else gcashModal.classList.add("hidden");
+});
+
+closeModal.addEventListener("click", () => gcashModal.classList.add("hidden"));
+
+receiptInput.addEventListener("change", function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        receiptPreview.src = e.target.result;
+        receiptPreview.classList.remove("hidden");
+
+        Tesseract.recognize(e.target.result, "eng").then(({ data: { text } }) => {
+            const refMatch = text.match(/Ref(?:erence)?\s*No\.?\s*[:#]?\s*([\d\s]{8,})/i);
+            referenceNumber.value = refMatch ? refMatch[1].replace(/\s+/g, '') : "";
+
+            const amountMatch =
+                text.match(/Total\s*Amount\s*[:\-]?\s*₱?\s*([\d,]+\.\d{1,2})/i)
+                || text.match(/Amount\s*[:\-]?\s*₱?\s*([\d,]+\.\d{1,2})/i)
+                || text.match(/₱\s*([\d,]+\.\d{1,2})/);
+
+            if (amountMatch) {
+                amountPaid.value = parseFloat(amountMatch[1].replace(/,/g, "")).toFixed(2);
+            }
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+confirmPayment.addEventListener("click", function(e) {
+    e.preventDefault();
+    const paid = parseFloat(amountPaid.value);
+    const total = parseFloat(hiddenPaymentTotal.value);
+
+    if (paid !== total) {
+        Swal.fire({ icon:'error', title:'Payment Mismatch', text:'Amount paid does not match total payment.' });
+        return;
+    }
+
+    document.getElementById("hiddenReferenceNumber").value = referenceNumber.value;
+    document.getElementById("hiddenAmountPaid").value = paid;
+
+    gcashModal.classList.add("hidden");
+    Swal.fire({ icon:'success', title:'Payment Validated', text:'You may now submit your return request.' });
+    this.disabled = true;
+});
+</script>
+    

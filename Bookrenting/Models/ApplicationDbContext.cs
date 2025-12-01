@@ -29,6 +29,9 @@ namespace BookRenting.Models
 
         public DbSet<Report> Reports { get; set; }
 
+public DbSet<ReturnBook> ReturnBooks { get; set; }  // maps to return_books
+
+
 
     }
 }
