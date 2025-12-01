@@ -27,5 +27,8 @@ namespace BookRenting.Models
          public DbSet<Book> Books { get; set; } = null!;
         public DbSet<RentedBook> RentedBooks { get; set; }
 
+        public DbSet<Report> Reports { get; set; }
+
+
     }
 }

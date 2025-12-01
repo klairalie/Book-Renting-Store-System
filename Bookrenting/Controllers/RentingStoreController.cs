@@ -60,31 +60,32 @@ namespace BookRenting.Controllers
 [ValidateAntiForgeryToken]
 public async Task<IActionResult> RentBookSubmit(RentedBook model, IFormFile? ReceiptFile)
 {
-   // DIGITAL validation
-if (string.Equals(model.BookType, "digital", StringComparison.OrdinalIgnoreCase))
-{
-    if (model.ReturnDate == null || model.ReturnDate <= model.BorrowDate)
+    // DIGITAL validation
+    if (string.Equals(model.BookType, "digital", StringComparison.OrdinalIgnoreCase))
     {
-        ModelState.AddModelError(nameof(model.ReturnDate), "Return date must be after borrow date for digital books.");
+        if (model.ReturnDate == null || model.ReturnDate <= model.BorrowDate)
+        {
+            ModelState.AddModelError(nameof(model.ReturnDate), "Return date must be after borrow date for digital books.");
+        }
     }
-}
 
-// PHYSICAL book cannot be softcopy
-if (string.Equals(model.BookType, "physical", StringComparison.OrdinalIgnoreCase) &&
-    string.Equals(model.BorrowType, "softcopy", StringComparison.OrdinalIgnoreCase))
-{
-    ModelState.AddModelError(nameof(model.BorrowType), "Physical books is not allowed for softcopy.");
-}
+    // PHYSICAL book cannot be softcopy
+    if (string.Equals(model.BookType, "physical", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(model.BorrowType, "softcopy", StringComparison.OrdinalIgnoreCase))
+    {
+        ModelState.AddModelError(nameof(model.BorrowType), "Physical books is not allowed for softcopy.");
+    }
 
-if (!ModelState.IsValid)
-{
-    return BadRequest(new {
-        success = false,
-        message = "Please check your form inputs.",
-        errors = ModelState.SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) 
-                  ?? Enumerable.Empty<string>()).ToArray()
-    });
-}
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(new
+        {
+            success = false,
+            message = "Please check your form inputs.",
+            errors = ModelState.SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage)
+                      ?? Enumerable.Empty<string>()).ToArray()
+        });
+    }
 
 
     try
@@ -135,6 +136,27 @@ if (!ModelState.IsValid)
             }
         }
 
+        // --------------------------------------------------------------
+        // BACKEND LATE FEE CALCULATION (NOT ADDED TO PaymentTotal)
+        // --------------------------------------------------------------
+
+        decimal lateFee = 0;
+
+        if (model.ReturnDate.HasValue)
+        {
+            DateTime today = DateTime.Now.Date;
+
+            if (today > model.ReturnDate.Value)
+            {
+                int lateDays = (today - model.ReturnDate.Value).Days;
+                lateFee = lateDays * 20;   // 20 PHP per day late
+            }
+        }
+
+        // --------------------------------------------------------------
+        // CREATE RENTEDBOOK ENTRY (LATEFEE SAVED BUT NOT ADDED TO TOTAL)
+        // --------------------------------------------------------------
+
         var rented = new RentedBook
         {
             FullName = model.FullName,
@@ -150,7 +172,11 @@ if (!ModelState.IsValid)
             BorrowType = model.BorrowType,
             Deposit = model.Deposit,
             ShippingFee = model.ShippingFee,
-            PaymentTotal = model.PaymentTotal,
+
+            PaymentTotal = model.PaymentTotal, // ORIGINAL PAYMENT TOTAL ONLY (NO LATE FEE)
+
+            LateFee = lateFee, // <-- stored separately
+
             PaymentMode = model.PaymentMode,
             ReferenceNumber = model.ReferenceNumber,
             AmountPaid = model.AmountPaid,
@@ -159,7 +185,6 @@ if (!ModelState.IsValid)
         };
 
         _context.RentedBooks.Add(rented);
-
         await _context.SaveChangesAsync();
 
         return Ok(new { success = true, message = "Rent request submitted successfully!" });
@@ -184,6 +209,33 @@ if (!ModelState.IsValid)
                                 .OrderByDescending(b => b.BorrowDate)
                                 .ToList();
     return View("MyBooks", approvedBooks);
+}
+
+[HttpGet]
+public IActionResult ReadNow(int rentId)
+{
+    var email = User?.Identity?.Name;
+
+    var rented = _context.RentedBooks
+        .FirstOrDefault(r => r.RentId == rentId && r.Email == email);
+
+    if (rented == null)
+        return NotFound("Rental not found.");
+
+    var book = _context.Books
+        .FirstOrDefault(b => b.Title == rented.BookTitle);
+
+    if (book == null)
+        return NotFound("Book not found.");
+
+var model = new RentedBook
+{
+    BookTitle = rented.BookTitle,
+    Author = rented.Author,
+    FilePath = book.FilePath ?? "" // empty string if null
+};
+
+    return View("ReadNow", model);
 }
 
     }

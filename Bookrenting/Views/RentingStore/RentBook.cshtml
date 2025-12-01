@@ -65,13 +65,13 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-medium">Borrow Date</label>
-            <input asp-for="BorrowDate" type="date" id="BorrowDate" class="w-full border rounded p-2.5 text-sm" required />
+            <input asp-for="BorrowDate" type="date" id="BorrowDate" class="w-full border border-red-500 rounded p-2.5 text-sm" required />
         </div>
 
        <!-- Return Date for ALL Books -->
 <div id="returnDateContainer">
     <label class="block text-sm font-medium">Return Date</label>
-    <input asp-for="ReturnDate" id="returnDate" type="date" class="w-full border rounded p-2.5 text-sm"/>
+    <input asp-for="ReturnDate" id="returnDate" type="date" class="w-full border border-red-500 rounded p-2.5 text-sm"/>
     <p class="text-xs text-gray-500">
         Note: For digital books, total payment is Book Price + 20 PHP per day. For physical books, please return by this date.
     </p>
@@ -80,7 +80,7 @@
 
         <div>
             <label class="block text-sm font-medium">Borrow Type</label>
-            <select asp-for="BorrowType" id="borrowType" class="w-full border rounded p-2.5 text-sm" required>
+            <select asp-for="BorrowType" id="borrowType" class="w-full border border-red-500 rounded p-2.5 text-sm" required>
                 <option value="">Select Type</option>
                 <option value="walkin">Walk-in</option>
                 <option value="ship">Ship</option>
@@ -107,7 +107,7 @@
 
         <div>
             <label class="block text-sm font-medium">Payment Mode</label>
-            <select asp-for="PaymentMode" id="paymentMode" class="w-full border rounded p-2.5 text-sm" required>
+            <select asp-for="PaymentMode" id="paymentMode" class="w-full border border-red-500 rounded p-2.5 text-sm" required>
                 <option value="">Select....</option>
                 <option value="cash">Cash</option>
                 <option value="gcash">GCash</option>
@@ -117,6 +117,8 @@
         <input type="hidden" asp-for="ReferenceNumber" id="referenceNumberHidden" />
         <input type="hidden" name="AmountPaid" id="hiddenAmountPaid" />
         <input type="hidden" name="BorrowType" id="hiddenBorrowType" />
+        <input type="hidden" name="LateFee" id="hiddenLateFee" />
+
 
     </div>
 
@@ -193,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   UPDATE PAYMENT WITH LATE FEE
+   UPDATE PAYMENT WITH UPDATED LATE FEE LOGIC
 ============================================================ */
 function updatePayment() {
     let bookPrice = parseFloat(document.getElementById("bookPriceField").value) || 0;
@@ -208,43 +210,61 @@ function updatePayment() {
     const returnDateInput = document.getElementById("returnDate").value;
 
     if (borrowDateInput && returnDateInput) {
+
         const borrowDate = new Date(borrowDateInput);
         const returnDate = new Date(returnDateInput);
         const today = new Date();
 
-        // Digital book payment: base price + 20/day
+        /* ================================================
+           DIGITAL BOOK PRICE = Book price + 20/day
+        ================================================= */
         if (bookType === "digital") {
             if (returnDate > borrowDate) {
                 const diffDays = Math.ceil((returnDate - borrowDate) / 86400000);
                 total = bookPrice + (diffDays * 20);
             }
-        } else { // Physical book
-            total = deposit + shipping + bookPrice;
         }
 
-        // Late fee if book is overdue
-        if (today > returnDate) {
+        /* ================================================
+           LATE FEE RULES (NEW FIXED VERSION)
+           • NOT added to total
+           • Starts AFTER 5 PM on return date
+           • 20 pesos per day
+        ================================================= */
+        if (today.toDateString() === returnDate.toDateString()) {
+            // Return date is today
+            if (today.getHours() >= 17) {
+                lateFee = 20;
+            } else {
+                lateFee = 0;
+            }
+        } 
+        else if (today > returnDate) {
+            // After return date — count days
             const lateDays = Math.ceil((today - returnDate) / 86400000);
             lateFee = lateDays * 20;
-            total += lateFee;
-
-            // Optional: visual indicator
-            document.getElementById("totalPaymentField").style.borderColor = "red";
-        } else {
-            document.getElementById("totalPaymentField").style.borderColor = "#d1d5db"; // reset
+        } 
+        else {
+            lateFee = 0;
         }
     }
 
-    // Update hidden field for backend
-    document.getElementById("hiddenPaymentTotal").value = total.toFixed(2);
-
-    // Optional: show separate late fee field (add this field in your HTML)
+    // SHOW LATE FEE (display only)
     if (document.getElementById("lateFeeField")) {
         document.getElementById("lateFeeField").value = lateFee.toFixed(2);
     }
 
-    // Update total payment visible field
+    // UPDATE **VISIBLE TOTAL WITHOUT LATE FEE**
     document.getElementById("totalPaymentField").value = total.toFixed(2);
+
+    // UPDATE HIDDEN FIELD FOR BACKEND (total ONLY)
+    document.getElementById("hiddenPaymentTotal").value = total.toFixed(2);
+
+    // UPDATE HIDDEN FIELD FOR LATE FEE
+    const lateFeeHidden = document.getElementById("hiddenLateFee");
+    if (lateFeeHidden) {
+        lateFeeHidden.value = lateFee.toFixed(2);
+    }
 }
 
 /* ============================================================
@@ -320,9 +340,38 @@ paymentMode.addEventListener("change", function() {
 });
 closeModal.addEventListener("click", () => gcashModal.classList.add("hidden"));
 
-/* ============================================================
-   RECEIPT OCR — AUTO-READ REFERENCE #
-============================================================ */
+// ============================================================
+// PREVENT CASH PAYMENT WHEN BORROW TYPE = SHIP
+// ============================================================
+document.getElementById("borrowType").addEventListener("change", function () {
+    const paymentMode = document.getElementById("paymentMode");
+
+    if (this.value === "ship") {
+        // Remove cash option if exists
+        const cashOption = paymentMode.querySelector('option[value="cash"]');
+        if (cashOption) cashOption.remove();
+
+        Swal.fire({
+            icon: "info",
+            title: "Notice",
+            text: "Cash payment is NOT allowed for shipping. Please use GCash.",
+            confirmButtonColor: "#3085d6"
+        });
+
+        // Auto-select GCash
+        paymentMode.value = "gcash";
+    } 
+    else {
+        // If NOT shipping and cash option is missing → restore it
+        if (!paymentMode.querySelector('option[value="cash"]')) {
+            const opt = document.createElement("option");
+            opt.value = "cash";
+            opt.textContent = "Cash";
+            paymentMode.insertBefore(opt, paymentMode.firstChild.nextSibling); 
+        }
+    }
+}) ;
+
 /* ============================================================
    RECEIPT OCR — AUTO-READ REFERENCE # AND AMOUNT PAID
 ============================================================ */
@@ -338,19 +387,9 @@ receiptInput.addEventListener("change", function() {
         Tesseract.recognize(e.target.result, "eng")
         .then(({ data: { text } }) => {
 
-            /* -----------------------------------------
-               EXTRACT REFERENCE NUMBER
-            ----------------------------------------- */
             const refMatch = text.match(/Ref(?:erence)?\s*No\.?\s*[:#]?\s*([\d\s]{8,})/i);
             referenceNumber.value = refMatch ? refMatch[1].replace(/\s+/g, '') : "";
 
-            if (!refMatch) {
-                console.warn("Reference number not found.");
-            }
-
-            /* -----------------------------------------
-               EXTRACT AMOUNT PAID — “Total Amount Sent”
-            ----------------------------------------- */
             const amountMatch =
                 text.match(/Total\s*Amount\s*Sent\s*[:\-]?\s*₱?\s*([\d,]+\.\d{1,2})/i)
                 || text.match(/Amount\s*[:\-]?\s*₱?\s*([\d,]+\.\d{1,2})/i)
@@ -359,14 +398,11 @@ receiptInput.addEventListener("change", function() {
             if (amountMatch) {
                 let extracted = amountMatch[1].replace(/,/g, "");
                 amountPaid.value = parseFloat(extracted).toFixed(2);
-            } else {
-                console.warn("Amount not detected.");
             }
         });
     };
     reader.readAsDataURL(file);
 });
-
 
 /* ============================================================
    CONFIRM PAYMENT
@@ -406,7 +442,6 @@ document.getElementById("rentForm").addEventListener("submit", async function (e
     document.getElementById("hiddenAmountPaid").value = parseFloat(document.getElementById("amountPaid").value) || 0;
     document.getElementById("hiddenBorrowType").value = document.getElementById("borrowType").value;
 
-    // Validate GCash
     if (paymentMode.value === "gcash") {
         if (!referenceNumber.value || !amountPaid.value) {
             Swal.fire({

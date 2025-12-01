@@ -17,15 +17,15 @@
 
     <!-- Total Users -->
     <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-        <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
+        <h3 class="text-lg font-semibold text-gray-700">Total Customer Accounts</h3>
         <p class="mt-2 text-3xl font-bold text-gray-900">@ViewBag.TotalUsers</p>
-        <p class="text-gray-500 mt-1">All registered users</p>
+        <p class="text-gray-500 mt-1">All registered users accounts</p>
     </div>
 
     <!-- Pending Rentals -->
     <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
         <h3 class="text-lg font-semibold text-gray-700">Pending Rentals</h3>
-        <p class="mt-2 text-3xl font-bold text-gray-900"></p>
+        <p class="mt-2 text-3xl font-bold text-gray-900">@ViewBag.TotalRents</p>
         <p class="text-gray-500 mt-1">Books waiting for approval</p>
     </div>
 </div>
@@ -49,6 +49,10 @@
             <p class="text-3xl font-bold text-[#a47148] mt-2">₱@ViewBag.MonthlySales</p>
         </div>
     </div>
+<div class="mt-6 bg-[#f8f4ef] p-6 rounded-xl shadow text-center">
+    <h3 class="text-lg font-semibold text-[#4b3832]">Admin Insights</h3>
+    <p class="text-gray-700 mt-2 whitespace-pre-line">@ViewBag.Insights</p>
+</div>
 
     <!-- Chart -->
     <canvas id="activityChart" height="120"></canvas>
@@ -59,7 +63,10 @@
     const chartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartData));
 
     const labels = chartData.map(x => "Day " + x.Day);
-    const rentCounts = chartData.map(x => x.Count);
+    const rentedCounts = chartData.map(x => x.Rented);
+    const returnedCounts = chartData.map(x => x.Returned);
+    const lateCounts = chartData.map(x => x.Late);
+    const lostCounts = chartData.map(x => x.Lost);
     const salesTotals = chartData.map(x => x.Total);
 
     const ctx = document.getElementById("activityChart").getContext("2d");
@@ -71,14 +78,39 @@
             datasets: [
                 {
                     label: "Books Rented",
-                    data: rentCounts,
+                    data: rentedCounts,
                     borderWidth: 3,
                     borderColor: "#a47148",
                     backgroundColor: "#a47148",
                     fill: false,
-                    tension: 0.5,          // 🔥 Smooth curves
-                    pointRadius: 4,
-                    pointHoverRadius: 7
+                    tension: 0.5
+                },
+                {
+                    label: "Books Returned",
+                    data: returnedCounts,
+                    borderWidth: 3,
+                    borderColor: "#4CAF50",
+                    backgroundColor: "#4CAF50",
+                    fill: false,
+                    tension: 0.5
+                },
+                {
+                    label: "Late Returns",
+                    data: lateCounts,
+                    borderWidth: 3,
+                    borderColor: "#FF9800",
+                    backgroundColor: "#FF9800",
+                    fill: false,
+                    tension: 0.5
+                },
+                {
+                    label: "Lost Books",
+                    data: lostCounts,
+                    borderWidth: 3,
+                    borderColor: "#F44336",
+                    backgroundColor: "#F44336",
+                    fill: false,
+                    tension: 0.5
                 },
                 {
                     label: "Total Sales (₱)",
@@ -87,20 +119,14 @@
                     borderColor: "#4b3832",
                     backgroundColor: "#4b3832",
                     fill: false,
-                    tension: 0.5,          // 🔥 Smooth curves
-                    pointRadius: 4,
-                    pointHoverRadius: 7
+                    tension: 0.5
                 }
             ]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: { position: "top" }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+            plugins: { legend: { position: "top" } },
+            scales: { y: { beginAtZero: true } }
         }
     });
 </script>

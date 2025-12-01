@@ -1,8 +1,10 @@
 @model IEnumerable<BookRenting.Models.RentedBook>
+@inject BookRenting.Models.ApplicationDbContext _context
+@using Microsoft.EntityFrameworkCore
 
 @{
-ViewData["Title"] = "My Books";
-Layout = "~/Views/Shared/_UserLayout.cshtml";
+    ViewData["Title"] = "My Books";
+    Layout = "~/Views/Shared/_UserLayout.cshtml";
 }
 
 @if (!Model.Any())
@@ -12,80 +14,52 @@ Layout = "~/Views/Shared/_UserLayout.cshtml";
 else
 {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        @foreach (var book in Model)
+        @foreach (var rentedBook in Model)
         {
             <div class="bg-white rounded-xl shadow-md border border-[#e8e5d9] p-4 relative overflow-hidden hover:shadow-lg transition duration-300">
-   
+
                 <!-- Book Info -->
                 <div class="mb-4">
-                    <h2 class="text-xl font-semibold text-[#4b3832]">@book.BookTitle</h2>
-                    <p class="text-gray-600">by @book.Author</p>
-                    <p class="text-sm text-gray-500 mt-1">Borrow Type: @book.BorrowType</p>
-                    <p class="text-sm text-gray-500">Status: <span class="font-medium">@book.Status</span></p>
+                    <h2 class="text-xl font-semibold text-[#4b3832]">@rentedBook.BookTitle</h2>
+                    <p class="text-gray-600">by @rentedBook.Author</p>
+                    <p class="text-sm text-gray-500 mt-1">Borrow Type: @rentedBook.BorrowType</p>
+                    <p class="text-sm text-gray-500">Status: <span class="font-medium">@rentedBook.Status</span></p>
                 </div>
 
                 <!-- Payment Info -->
                 <div class="mb-4 text-sm text-gray-600 space-y-1">
-                    <p>Deposit: <span class="font-medium text-[#4b3832]">₱@book.Deposit</span></p>
-                    <p>Shipping Fee: <span class="font-medium text-[#4b3832]">₱@book.ShippingFee</span></p>
-                    <p>Total Paid: <span class="font-semibold text-[#a47148]">₱@book.AmountPaid</span></p>
+                    <p>Deposit: <span class="font-medium text-[#4b3832]">₱@rentedBook.Deposit</span></p>
+                    <p>Shipping Fee: <span class="font-medium text-[#4b3832]">₱@rentedBook.ShippingFee</span></p>
+                    <p>Total Paid: <span class="font-semibold text-[#a47148]">₱@rentedBook.AmountPaid</span></p>
                 </div>
 
                 <!-- Borrow Dates -->
                 <div class="mb-4 text-sm text-gray-500 space-y-1">
-                    <p>Borrowed: <span class="font-medium">@book.BorrowDate.ToString("MMM dd, yyyy")</span></p>
-                    <p>Return Due: <span class="font-medium">@book.ReturnDate?.ToString("MMM dd, yyyy")</span></p>
+                    <p>Borrowed: <span class="font-medium">@rentedBook.BorrowDate.ToString("MMM dd, yyyy")</span></p>
+                    <p>Return Due: <span class="font-medium">@rentedBook.ReturnDate?.ToString("MMM dd, yyyy")</span></p>
                 </div>
 
-                <!-- Countdown -->
-                <div class="mb-3">
-                    <p class="text-sm text-gray-500">
-                        Time Remaining: 
-                        <span class="countdown font-semibold text-[#4b3832]" data-return="@book.ReturnDate?.ToString("O")">
-                            Loading...
-                        </span>
-                    </p>
-                </div>
+                <!-- Read Now Button for Digital Books -->
+                @if (rentedBook.BorrowType == "softcopy" && rentedBook.Status == "Approved")
+                {
+                    var book = await _context.Books
+                        .FirstOrDefaultAsync(b => b.Title == rentedBook.BookTitle);
+
+                    if (book != null && !string.IsNullOrEmpty(book.FilePath))
+                    {
+                        <a href="@Url.Action("ReadNow", "RentingStore", new { rentId = rentedBook.RentId })"
+                           class="mt-3 inline-block bg-[#4b3832] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#3a2d26] transition">
+                            📖 Read Now
+                        </a>
+                    }
+                }
 
                 <!-- Receipt Link -->
-                @if (!string.IsNullOrEmpty(book.ReceiptPath))
+                @if (!string.IsNullOrEmpty(rentedBook.ReceiptPath))
                 {
-                    <a href="@book.ReceiptPath" target="_blank" class="text-sm text-[#a47148] hover:underline">View Receipt</a>
+                    <a href="@rentedBook.ReceiptPath" target="_blank" class="block mt-3 text-sm text-[#a47148] hover:underline">View Receipt</a>
                 }
             </div>
         }
     </div>
-}
-
-@section Scripts {
-<script>
-    function updateCountdowns() {
-        const countdowns = document.querySelectorAll('.countdown');
-
-        countdowns.forEach(cd => {
-            const returnDate = new Date(cd.dataset.return);
-            const now = new Date();
-            let diff = returnDate - now;
-
-            if (diff <= 0) {
-                cd.innerText = "Overdue!";
-                cd.classList.add('text-red-600', 'font-bold');
-                return;
-            }
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            diff -= days * (1000 * 60 * 60 * 24);
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            diff -= hours * (1000 * 60 * 60);
-            const minutes = Math.floor(diff / (1000 * 60));
-            diff -= minutes * (1000 * 60);
-            const seconds = Math.floor(diff / 1000);
-
-            cd.innerText = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-        });
-    }
-
-    updateCountdowns();
-    setInterval(updateCountdowns, 1000); // update every second
-</script>
 }

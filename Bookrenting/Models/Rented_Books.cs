@@ -84,6 +84,10 @@ public DateTime? ReturnDate { get; set; } = DateTime.Now;
         [Column("status")]
         public string Status { get; set; } = "Pending";
 
-        
+        public decimal LateFee { get; set; }
+
+[NotMapped] // This tells EF not to look for it in the database
+    public string FilePath { get; set; } = string.Empty;
+
     }
-}
+    }           
